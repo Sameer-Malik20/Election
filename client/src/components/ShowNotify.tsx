@@ -1,21 +1,45 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const PositionsList = () => {
-  const [announcements, setAnnouncements] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [message, setMessage] = useState("");
+interface Announcement {
+  _id: string;
+  announcement?: {
+    title: string;
+    message: string;
+  };
+  createdAt: string;
+}
+
+interface Nomination {
+  _id: string;
+  position: string;
+  createdAt: string;
+  isVerified: boolean;
+  isRejected: boolean;
+  rejectReason?: string;
+}
+
+const PositionsList: React.FC = () => {
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string>("");
 
   // Modal states
-  const [showModal, setShowModal] = useState(false);
-  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
-  const [bio, setBio] = useState("");
-  const [appliedAnnouncements, setAppliedAnnouncements] = useState([]);
-  const [myNomination, setMyNomination] = useState(null);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [selectedAnnouncement, setSelectedAnnouncement] =
+    useState<Announcement | null>(null);
+  const [bio, setBio] = useState<string>("");
+  const [appliedAnnouncements, setAppliedAnnouncements] = useState<string[]>(
+    []
+  );
+  const [myNomination, setMyNomination] = useState<Nomination[] | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const storedApplied =
-      JSON.parse(localStorage.getItem("appliedPositions")) || [];
+    const storedApplied: string[] = JSON.parse(
+      localStorage.getItem("appliedPositions") || "[]"
+    );
     setAppliedAnnouncements(storedApplied);
 
     fetchAnnouncements();
@@ -31,7 +55,6 @@ const PositionsList = () => {
       const res = await fetch(
         "https://election-4j7k.onrender.com/api/auth/published",
         {
-          method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -41,7 +64,9 @@ const PositionsList = () => {
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
+        return;
       }
+
       const data = await res.json();
 
       if (res.ok) {
@@ -51,7 +76,7 @@ const PositionsList = () => {
       }
     } catch (err) {
       console.error("Error fetching announcements:", err);
-      setError(err.message);
+      setError("Error fetching announcements");
     } finally {
       setLoading(false);
     }
@@ -73,15 +98,15 @@ const PositionsList = () => {
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
+        return;
       }
       const data = await res.json();
 
       if (res.ok && Array.isArray(data) && data.length > 0) {
-        // Sort by createdAt (latest first)
         const sortedNominations = data.sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+          (a: Nomination, b: Nomination) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
-
         setMyNomination(sortedNominations);
       } else {
         setMyNomination([]);
@@ -91,8 +116,7 @@ const PositionsList = () => {
     }
   };
 
-  // When user clicks apply
-  const handleApplyClick = (announcement) => {
+  const handleApplyClick = (announcement: Announcement) => {
     if (appliedAnnouncements.includes(announcement._id)) return;
     setSelectedAnnouncement(announcement);
     setBio("");
@@ -104,7 +128,6 @@ const PositionsList = () => {
     setSelectedAnnouncement(null);
   };
 
-  // Submit application
   const handleSubmit = async () => {
     if (!selectedAnnouncement) return;
     if (bio.trim() === "") {
@@ -113,7 +136,6 @@ const PositionsList = () => {
     }
 
     const token = localStorage.getItem("accessToken");
-
     try {
       const res = await fetch(
         "https://election-4j7k.onrender.com/api/nomination/create",
@@ -132,20 +154,20 @@ const PositionsList = () => {
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
+        return;
       }
-      const data = await res.json();
 
       if (res.status === 201 || res.status === 409) {
         setMessage(
           res.status === 201
-            ? " Application submitted successfully!"
-            : " You have already applied for this position."
+            ? "Application submitted successfully!"
+            : "You have already applied for this position."
         );
 
         setAppliedAnnouncements((prev) => {
           if (!prev.includes(selectedAnnouncement._id)) {
             const updated = [...prev, selectedAnnouncement._id];
-            localStorage.setItem("appliedPositions", JSON.stringify(updated)); //  Persist
+            localStorage.setItem("appliedPositions", JSON.stringify(updated));
             return updated;
           }
           return prev;
@@ -153,7 +175,7 @@ const PositionsList = () => {
       }
     } catch (err) {
       console.error("Error submitting application:", err);
-      setMessage(" Server error while submitting application.");
+      setMessage("Server error while submitting application.");
     }
 
     setShowModal(false);
@@ -185,7 +207,7 @@ const PositionsList = () => {
         <div className="mb-4 p-4 rounded border shadow bg-gray-50">
           <h3 className="font-bold mb-2">Your Applications</h3>
 
-          {myNomination.map((n, index) => (
+          {myNomination.map((n) => (
             <div key={n._id} className="mb-3 p-3 border-b">
               <p>
                 <strong>Position:</strong> {n.position}
@@ -270,7 +292,7 @@ const PositionsList = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
                   No announcements found.
                 </td>
               </tr>

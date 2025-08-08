@@ -1,17 +1,26 @@
 import React, { useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 export default function UploadData() {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
-  const [alreadyUsers, setAlreadyUsers] = useState<any[]>([]);
-  const [failedUsers, setFailedUsers] = useState<any[]>([]);
+
+  const [failedUsers, setFailedUsers] = useState<FailedUser[]>([]);
+  const navigate = useNavigate();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
     }
   };
+
+  interface FailedUser {
+    id: string;
+    name: string;
+    reason: string; // failure reason
+    email: string;
+    error: string;
+  }
 
   const handleUpload = async () => {
     if (!file) {
@@ -25,7 +34,7 @@ export default function UploadData() {
     try {
       setUploading(true);
       setMessage("");
-      setAlreadyUsers([]);
+
       setFailedUsers([]);
 
       const token = localStorage.getItem("accessToken");
@@ -52,7 +61,7 @@ export default function UploadData() {
             data.alreadyUsers?.length || 0
           } |  Failed: ${data.failedUsers?.length || 0} | Total: ${data.total}`
         );
-        setAlreadyUsers(data.alreadyUsers || []);
+
         setFailedUsers(data.failedUsers || []);
       } else {
         setMessage(`Upload failed: ${data.message}`);

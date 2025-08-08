@@ -15,9 +15,10 @@ const AdvancedCorporateEVM = () => {
     CTO: false,
   });
   const [activePosition, setActivePosition] = useState("Select");
-
+  // @ts-ignore
+  const roleStatus = roles[roleName];
   const [showCompletion, setShowCompletion] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime] = useState(new Date());
   const [batteryLevel, setBatteryLevel] = useState(100);
   const [isVoting, setIsVoting] = useState(false);
   const [voteProgress, setVoteProgress] = useState(0);
@@ -33,10 +34,10 @@ const AdvancedCorporateEVM = () => {
   const [signature, setSignature] = useState("Fetching...");
   const [gps, setGps] = useState("Fetching...");
   const [announcements, setAnnouncements] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [message, setMessage] = useState("");
-  const [myNomination, setMyNomination] = useState(null);
+  const [, setLoading] = useState(true);
+  const [, setError] = useState(null);
+  const [, setMessage] = useState("");
+
   const [nominations, setNominations] = useState([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [showVotes, setShowVotes] = useState<string | null>(null);
@@ -99,7 +100,7 @@ const AdvancedCorporateEVM = () => {
         const verifiedNominations = data.filter((n) => n.isVerified === true);
 
         // ✅ Optional: extract only names
-        const verifiedUserNames = verifiedNominations.map((n) => n.user?.name);
+        //const verifiedUserNames = verifiedNominations.map((n) => n.user?.name);
 
         setNominations(verifiedNominations);
         setMessage("Verified nominations loaded successfully!");
@@ -117,15 +118,14 @@ const AdvancedCorporateEVM = () => {
   // Update time every second
 
   useEffect(() => {
+    // @ts-ignore
     navigator.getBattery?.().then((bat) => {
       const updateBattery = () => setBatteryLevel(Math.round(bat.level * 100));
-
       updateBattery();
       const interval = setInterval(updateBattery, 1000);
       return () => clearInterval(interval);
     });
   }, []);
-
   //ip address
   useEffect(() => {
     fetch("https://ipinfo.io/json")
@@ -344,7 +344,7 @@ const AdvancedCorporateEVM = () => {
   };
 
   const isPositionDisabled = (
-    position: "MANAGER" | "CEO" | "DIRECTOR" | "CTO"
+    _position: "MANAGER" | "CEO" | "DIRECTOR" | "CTO"
   ) => {
     return isVoting || isVotingComplete;
   };

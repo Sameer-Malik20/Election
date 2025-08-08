@@ -2,15 +2,21 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 
+interface Vote {
+  ip: string;
+  signature: string;
+}
+
 const CandidateVotes = () => {
   const { candidateId } = useParams();
   const navigate = useNavigate();
-  const [votes, setVotes] = useState([]);
+  const [votes, setVotes] = useState<Vote[]>([]);
   const [candidateName, setCandidateName] = useState("");
   const [loading, setLoading] = useState(true);
-  const [ip, setIp] = useState("Fetching...");
-  const [signature, setSignature] = useState("Fetching...");
+  const [, setIp] = useState("Fetching...");
+  const [, setSignature] = useState("Fetching...");
 
+  // IP fetch
   useEffect(() => {
     fetch("https://ipinfo.io/json")
       .then((res) => res.json())
@@ -26,6 +32,7 @@ const CandidateVotes = () => {
       });
   }, []);
 
+  // Fingerprint fetch
   useEffect(() => {
     const getFingerprint = async () => {
       const fp = await FingerprintJS.load();
@@ -35,6 +42,7 @@ const CandidateVotes = () => {
     getFingerprint();
   }, []);
 
+  // Fetch votes
   useEffect(() => {
     const fetchVotes = async () => {
       const token = localStorage.getItem("accessToken");
@@ -50,6 +58,7 @@ const CandidateVotes = () => {
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
+        return; // Exit if unauthorized
       }
       const data = await res.json();
 
@@ -65,13 +74,13 @@ const CandidateVotes = () => {
       setLoading(false);
     };
     fetchVotes();
-  }, [candidateId]);
+  }, [candidateId, navigate]);
 
-  // Unique votes filter - same IP or signature considered duplicate
-  const getUniqueVotes = (votes) => {
-    const seenIps = new Set();
-    const seenSignatures = new Set();
-    const uniqueVotes = [];
+  // Define Vote interface
+  const getUniqueVotes = (votes: Vote[]): Vote[] => {
+    const seenIps = new Set<string>();
+    const seenSignatures = new Set<string>();
+    const uniqueVotes: Vote[] = [];
 
     for (const vote of votes) {
       if (!seenIps.has(vote.ip) && !seenSignatures.has(vote.signature)) {
@@ -80,7 +89,6 @@ const CandidateVotes = () => {
         seenSignatures.add(vote.signature);
       }
     }
-
     return uniqueVotes;
   };
 
@@ -125,10 +133,10 @@ const CandidateVotes = () => {
                         {idx + 1}
                       </td>
                       <td className="px-4 py-2 border-b border-blue-50">
-                        {ip}
+                        {v.ip}
                       </td>
                       <td className="px-4 py-2 border-b border-blue-50">
-                        {signature}
+                        {v.signature}
                       </td>
                     </tr>
                   ))}

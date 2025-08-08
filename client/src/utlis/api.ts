@@ -3,7 +3,7 @@ import { handleUnauthorized, getAccessToken } from "./auth";
 
 const BASE_URL = "https://election-4j7k.onrender.com"; // Your backend URL
 
-http: interface ApiOptions extends RequestInit {
+interface ApiOptions extends RequestInit {
   headers?: HeadersInit;
 }
 

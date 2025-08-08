@@ -1,4 +1,5 @@
 import { useEffect, useState, type JSX } from "react";
+import FingerprintJS from "@fingerprintjs/fingerprintjs";
 
 interface StatsCard {
   title: string;
@@ -7,64 +8,45 @@ interface StatsCard {
   change: number;
 }
 
+interface Vote {
+  user?: {
+    name: string;
+  };
+  machineId: string;
+  ipAddress: string;
+}
+
+interface Nomination {
+  _id: string;
+  user?: {
+    name: string;
+  };
+  description?: string;
+  position?: string;
+  votes?: Vote[];
+  isVerified?: boolean; // यहाँ जोड़ें
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<StatsCard[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [nominations, setNominations] = useState([]);
-  const [message, setMessage] = useState("");
-  const [ip, setIp] = useState("Fetching...");
-  const [signature, setSignature] = useState("Fetching...");
+  const [error, setError] = useState<string>("");
+  const [totalUsers, setTotalUsers] = useState<number>(0);
+  const [nominations, setNominations] = useState<Nomination[]>([]);
+  const [, setMessage] = useState<string>("");
+  const [, setIp] = useState<string>("Fetching...");
+  const [, setSignature] = useState<string>("Fetching...");
 
-  // Assuming a function handleVote executes the fetch
-  const handleVote = async () => {
-    const token = localStorage.getItem("accessToken");
+  // Assume selectedCandidate and positionList are defined somewhere in your code
 
-    try {
-      const response = await fetch(
-        "https://election-4j7k.onrender.com/api/nomination/vote",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            nominationId: selectedCandidate,
-            position: positionList,
-            signature: signature,
-            ip: ip,
-          }),
-        }
-      );
+  // handleVote function, if needed later, can be restored here
+  // const handleVote = async () => {
+  //   ... (इसे फिर से लिखें यदि आवश्यक हो)
+  // };
 
-      if (!response.ok) {
-        throw new Error("Vote submission failed");
-      }
-
-      // Vote successful, now update the "Users Voted" count
-      setStats((prevStats) =>
-        prevStats.map((stat) => {
-          if (stat.title === "Users Voted") {
-            // Increment the count by 1
-            const newCount = stat.value + 1; // assuming value is number
-            return {
-              ...stat,
-              value: newCount,
-            };
-          }
-          return stat;
-        })
-      );
-    } catch (err) {
-      console.error("Error voting:", err);
-    }
-  };
   const fetchNominations = async () => {
     setLoading(true);
     setMessage("");
-
     try {
       const token = localStorage.getItem("accessToken");
       const res = await fetch(
@@ -81,12 +63,10 @@ export default function AdminDashboard() {
       const data = await res.json();
 
       if (res.ok) {
-        // ✅ Filter verified nominations
-        const verifiedNominations = data.filter((n) => n.isVerified === true);
-
-        // ✅ Optional: extract only names
-        const verifiedUserNames = verifiedNominations.map((n) => n.user?.name);
-
+        // Filter verified nominations
+        const verifiedNominations = data.filter(
+          (n: Nomination) => n.isVerified === true
+        );
         setNominations(verifiedNominations);
         setMessage("Verified nominations loaded successfully!");
       } else {
@@ -94,13 +74,14 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       console.error("Error fetching nominations:", err);
-      setError(err.message);
+      setError("Error fetching nominations");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    // Fetch IP info
     fetch("https://ipinfo.io/json")
       .then((res) => res.json())
       .then((data) => {
@@ -116,15 +97,22 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
+    // Fetch fingerprint
     const getFingerprint = async () => {
-      const fp = await FingerprintJS.load();
-      const result = await fp.get();
-      setSignature(result.visitorId);
+      try {
+        const fp = await FingerprintJS.load();
+        const result = await fp.get();
+        setSignature(result.visitorId);
+      } catch {
+        setSignature("Unknown");
+      }
     };
     getFingerprint();
   }, []);
+
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
+    if (!token) return;
 
     fetch("https://election-4j7k.onrender.com/api/auth/count", {
       headers: {
@@ -132,13 +120,11 @@ export default function AdminDashboard() {
       },
     })
       .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();
       })
       .then((data) => {
-        setTotalUsers(data.totalUsers); // Assuming API returns { totalUsers: number }
+        setTotalUsers(data.totalUsers || 0);
       })
       .catch((err) => {
         console.error("Fetch error:", err.message);
@@ -147,6 +133,7 @@ export default function AdminDashboard() {
     fetchNominations();
   }, []);
 
+  // Calculate voter count
   const voterCount = new Set(
     nominations
       .flatMap((n) =>
@@ -158,6 +145,8 @@ export default function AdminDashboard() {
   ).size;
 
   const userRemaining = totalUsers - voterCount;
+
+  // Mock dashboard stats
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -224,7 +213,6 @@ export default function AdminDashboard() {
           },
         ];
 
-        // Simulate API call delay
         await new Promise((resolve) => setTimeout(resolve, 800));
         setStats(mockStats);
       } catch (err) {
@@ -237,7 +225,7 @@ export default function AdminDashboard() {
     };
 
     fetchDashboardData();
-  }, [totalUsers, voterCount, userRemaining]); // Re-run when totalUsers updates
+  }, [totalUsers, voterCount, userRemaining]);
 
   return (
     <div className="space-y-6">
@@ -303,7 +291,7 @@ export default function AdminDashboard() {
             ))}
           </div>
 
-          {/* Candidates and Votes List */}
+          {/* Candidates & Votes Table */}
           <div className="mt-8 p-6 bg-gray-50 rounded-lg shadow-md">
             <h3 className="text-2xl font-semibold mb-6 text-center text-gray-800 border-b pb-3 border-gray-300">
               Candidates & Votes
@@ -332,16 +320,15 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {nominations.map((n, index) => {
-                      const uniqueVotes = new Set(
+                    {nominations.map((n) => {
+                      const uniqueVotesCount = new Set(
                         (n.votes || [])
                           .filter((v) => v.user?.name !== "NOTA")
-                          .map((v) => `${signature}-${ip}`)
-                      );
-
+                          .map((v) => `${v.machineId}-${v.ipAddress}`)
+                      ).size;
                       return (
                         <tr
-                          key={index}
+                          key={n._id}
                           className="hover:bg-gray-50 transition duration-200"
                         >
                           <td className="px-4 py-3 border-b border-gray-200 text-gray-800 font-medium">
@@ -354,7 +341,7 @@ export default function AdminDashboard() {
                             {n.position || "N/A"}
                           </td>
                           <td className="px-4 py-3 border-b border-gray-200 text-center font-semibold text-lg text-blue-600">
-                            {uniqueVotes.size}
+                            {uniqueVotesCount}
                           </td>
                         </tr>
                       );

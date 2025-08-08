@@ -1,13 +1,34 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const AllNominations = () => {
-  const [nominations, setNominations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [message, setMessage] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
-  const [currentNominationId, setCurrentNominationId] = useState(null);
+interface User {
+  name: string;
+  email: string;
+}
+
+interface Nomination {
+  _id: string;
+  user?: User;
+  position: string;
+  description: string;
+  createdAt: string;
+  isVerified: boolean;
+  isRejected: boolean;
+  rejectReason?: string;
+  err: string;
+}
+
+const AllNominations: React.FC = () => {
+  const [nominations, setNominations] = useState<Nomination[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string>("");
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [rejectReason, setRejectReason] = useState<string>("");
+  const [currentNominationId, setCurrentNominationId] = useState<string | null>(
+    null
+  );
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchNominations();
@@ -19,7 +40,6 @@ const AllNominations = () => {
 
     try {
       const token = localStorage.getItem("accessToken");
-
       const res = await fetch(
         "https://election-4j7k.onrender.com/api/nomination/getall?type=nominations",
         {
@@ -34,7 +54,9 @@ const AllNominations = () => {
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
+        return;
       }
+
       const data = await res.json();
 
       if (res.ok) {
@@ -43,28 +65,30 @@ const AllNominations = () => {
       } else {
         setError(data.message || "Failed to fetch nominations");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching nominations:", err);
-      setError(err.message);
+      setError(err.message || "An error occurred");
     } finally {
       setLoading(false);
     }
   };
 
-  // Verify Nomination
-  const handleVerify = async (id) => {
+  const handleVerify = async (id: string) => {
     const token = localStorage.getItem("accessToken");
     try {
       const res = await fetch(
         `https://election-4j7k.onrender.com/api/nomination/verify/${id}`,
         {
           method: "PUT",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
+        return;
       }
       const data = await res.json();
       if (res.ok) {
@@ -76,8 +100,7 @@ const AllNominations = () => {
     }
   };
 
-  // Reject Nomination (Ask for Reason)
-  const openRejectModal = (id) => {
+  const openRejectModal = (id: string) => {
     setCurrentNominationId(id);
     setRejectReason("");
     setShowModal(true);
@@ -105,6 +128,7 @@ const AllNominations = () => {
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
+        return;
       }
       const data = await res.json();
       if (res.ok) {
@@ -117,8 +141,7 @@ const AllNominations = () => {
     }
   };
 
-  //  Delete Nomination
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this nomination?"))
       return;
 
@@ -134,6 +157,7 @@ const AllNominations = () => {
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
+        return;
       }
       const data = await res.json();
       if (res.ok) {
@@ -300,7 +324,7 @@ const AllNominations = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                   No nominations found.
                 </td>
               </tr>

@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
+interface Announcement {
+  _id: string;
+  description: string;
+  createdAt: string;
+}
 
 export default function PublishAnnouncement() {
-  const positions = [
+  const positions: string[] = [
     "CEO",
     "CTO",
     "CFO",
@@ -18,11 +25,12 @@ export default function PublishAnnouncement() {
     "Finance Manager",
   ];
 
-  const [title, setTitle] = useState("");
-  const [messageText, setMessageText] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [responseMsg, setResponseMsg] = useState("");
-  const [announcements, setAnnouncements] = useState([]);
+  const [title, setTitle] = useState<string>("");
+  const [messageText, setMessageText] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [responseMsg, setResponseMsg] = useState<string>("");
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const navigate = useNavigate();
 
   const token = localStorage.getItem("accessToken");
 
@@ -42,6 +50,7 @@ export default function PublishAnnouncement() {
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
+        return;
       }
       const data = await res.json();
       if (res.ok) setAnnouncements(data);
@@ -74,6 +83,7 @@ export default function PublishAnnouncement() {
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
+        return;
       }
       const data = await res.json();
       if (res.ok) {
@@ -83,14 +93,14 @@ export default function PublishAnnouncement() {
         fetchAnnouncements(); // refresh list
       } else setResponseMsg(` ${data.message}`);
     } catch (err) {
-      setResponseMsg(" Server error");
+      setResponseMsg("Server error");
     } finally {
       setLoading(false);
     }
   };
 
-  //  Delete Announcement
-  const handleDelete = async (id) => {
+  // Delete Announcement
+  const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this announcement?"))
       return;
 
@@ -105,6 +115,7 @@ export default function PublishAnnouncement() {
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
+        return;
       }
       const data = await res.json();
       if (res.ok) {
@@ -180,7 +191,6 @@ export default function PublishAnnouncement() {
             >
               <div>
                 <h4 className="font-semibold">{a.description}</h4>
-
                 <span className="text-sm text-gray-500">
                   {new Date(a.createdAt).toLocaleString()}
                 </span>
