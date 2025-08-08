@@ -15,8 +15,7 @@ const AdvancedCorporateEVM = () => {
     CTO: false,
   });
   const [activePosition, setActivePosition] = useState("Select");
-  // @ts-ignore
-  const roleStatus = roles[roleName];
+  
   const [showCompletion, setShowCompletion] = useState(false);
   const [currentTime] = useState(new Date());
   const [batteryLevel, setBatteryLevel] = useState(100);
