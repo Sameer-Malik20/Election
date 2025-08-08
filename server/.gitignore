@@ -1,0 +1,31 @@
+# Node.js / React / JavaScript
+node_modules/
+build/
+dist/
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+
+.vscode/
+.idea/
+.DS_Store
+
+# OS-specific files
+Thumbs.db
+Thumbs.db
+Desktop.ini
+
+# Coverage रिपोर्ट
+coverage/
+
+# Optional: Lock files 
+# package-lock.json
+# yarn.lock
