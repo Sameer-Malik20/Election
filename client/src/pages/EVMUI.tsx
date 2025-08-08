@@ -48,13 +48,16 @@ const AdvancedCorporateEVM = () => {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch("http://localhost:5000/api/auth/published", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetch(
+        "https://election-4j7k.onrender.com/api/auth/published",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const data = await res.json();
 
@@ -79,7 +82,7 @@ const AdvancedCorporateEVM = () => {
     try {
       const token = localStorage.getItem("accessToken");
       const res = await fetch(
-        "http://localhost:5000/api/nomination/getall?type=nominations",
+        "https://election-4j7k.onrender.com/api/nomination/getall?type=nominations",
         {
           method: "GET",
           headers: {
@@ -300,7 +303,7 @@ const AdvancedCorporateEVM = () => {
 
       const token = localStorage.getItem("accessToken");
 
-      await fetch("http://localhost:5000/api/nomination/vote", {
+      await fetch("https://election-4j7k.onrender.com/api/nomination/vote", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -370,7 +373,7 @@ const AdvancedCorporateEVM = () => {
 
   // Total users count effect
   useEffect(() => {
-    fetch("http://localhost:5000/api/auth/count", {
+    fetch("https://election-4j7k.onrender.com/api/auth/count", {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
       },

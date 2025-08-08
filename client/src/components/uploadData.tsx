@@ -30,13 +30,16 @@ export default function UploadData() {
 
       const token = localStorage.getItem("accessToken");
 
-      const res = await fetch("http://localhost:5000/api/auth/upload-users", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
+      const res = await fetch(
+        "https://election-4j7k.onrender.com/api/auth/upload-users",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");

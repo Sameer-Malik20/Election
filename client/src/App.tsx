@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import AdminLayout from "./layouts/AdminLayout";
@@ -14,10 +19,19 @@ import AllNominations from "./components/AllNomination";
 import CandidateVotes from "./components/CandidateVotes";
 import Navbar from "./components/navbar";
 
+function ConditionalNavbar() {
+  const location = useLocation();
+
+  if (location.pathname === "/") {
+    return <Navbar />;
+  }
+  return null;
+}
 function App() {
   return (
     <Router>
-      <Navbar />
+      <ConditionalNavbar />
+
       <Routes>
         {/* 👇 Only EVM route is active */}
 
