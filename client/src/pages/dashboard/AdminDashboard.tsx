@@ -51,7 +51,7 @@ export default function AdminDashboard() {
     try {
       const token = localStorage.getItem("accessToken");
       const res = await fetch(
-        "http://localhost:5000/api/nomination/getall?type=nominations",
+        "https://election-4j7k.onrender.com/api/nomination/getall?type=nominations",
         {
           method: "GET",
           headers: {
@@ -116,7 +116,7 @@ export default function AdminDashboard() {
     const token = localStorage.getItem("accessToken");
     if (!token) return;
 
-    fetch("http://localhost:5000/api/auth/count", {
+    fetch("https://election-4j7k.onrender.com/api/auth/count", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
