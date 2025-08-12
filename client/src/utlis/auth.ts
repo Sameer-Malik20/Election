@@ -11,7 +11,7 @@ interface DecodedToken {
   exp: number; // JWT expiry timestamp
 }
 
-const BASE_URL = "https://election-4j7k.onrender.com";
+const BASE_URL = "http://localhost:5000";
 
 // Save token and set auto logout timer
 export const setAuthTokens = (

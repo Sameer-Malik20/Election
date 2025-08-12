@@ -42,7 +42,7 @@ export default function PublishAnnouncement() {
   const fetchAnnouncements = async () => {
     try {
       const res = await fetch(
-        "https://election-4j7k.onrender.com/api/nomination/getall?type=announcements",
+        "http://localhost:5000/api/nomination/getall?type=announcements",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -69,17 +69,14 @@ export default function PublishAnnouncement() {
     setLoading(true);
     setResponseMsg("");
     try {
-      const res = await fetch(
-        "https://election-4j7k.onrender.com/api/nomination/publish",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ title, message: messageText }),
-        }
-      );
+      const res = await fetch("http://localhost:5000/api/nomination/publish", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, message: messageText }),
+      });
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
@@ -105,13 +102,10 @@ export default function PublishAnnouncement() {
       return;
 
     try {
-      const res = await fetch(
-        `https://election-4j7k.onrender.com/api/nomination/${id}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await fetch(`http://localhost:5000/api/nomination/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");

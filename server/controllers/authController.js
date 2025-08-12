@@ -232,11 +232,16 @@ export const logout = async (req, res) => {
     return res.status(403).json({ message: "Invalid refresh token" });
   }
 };
-
 export const getUserCount = async (req, res) => {
   try {
-    const count = await User.countDocuments();
-    return res.status(200).json({ totalUsers: count });
+    const users = await User.find().select("-password");
+
+    const count = users.length;
+
+    return res.status(200).json({
+      totalUsers: count,
+      users: users,
+    });
   } catch (error) {
     return res.status(500).json({ message: "Server error" });
   }

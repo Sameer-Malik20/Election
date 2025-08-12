@@ -14,6 +14,7 @@ import uploadData from "../controllers/adminData.js";
 import { getPublishedPositions } from "../controllers/electionNotify.js";
 import {
   getMyNomination,
+  getResults,
   UserNominations,
 } from "../controllers/nominationController.js";
 
@@ -31,5 +32,7 @@ router.post("/upload-users", authenticate(), upload.single("file"), uploadData);
 router.get("/published", authenticate(), getPublishedPositions);
 router.get("/myNom", authenticate(), getMyNomination);
 router.get("/count", authenticate(), getUserCount);
+router.get("/result", authenticate(), getResults);
 router.get("/:id", authenticate(), UserNominations);
+
 export default router;

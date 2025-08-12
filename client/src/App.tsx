@@ -18,6 +18,8 @@ import ShowPosition from "./components/ShowNotify";
 import AllNominations from "./components/AllNomination";
 import CandidateVotes from "./components/CandidateVotes";
 import Navbar from "./components/navbar";
+import UserInfoSections from "./components/usersDetails";
+import ResultPage from "./components/Result";
 
 function ConditionalNavbar() {
   const location = useLocation();
@@ -32,7 +34,7 @@ function App() {
     <Router>
       <ConditionalNavbar />
 
-      <Routes>
+      <Routes key={location.pathname} location={location}>
         {/* 👇 Only EVM route is active */}
 
         <Route path="/" element={<EVMUI />} />
@@ -52,6 +54,11 @@ function App() {
           <Route path="data" element={<UploadData />} />
           <Route path="notify" element={<PublishAnnouncement />} />
           <Route path="users" element={<AllNominations />} />
+          <Route path="usersdetails" element={<UserInfoSections />} />
+          <Route
+            path="candidate-votes/:candidateId"
+            element={<CandidateVotes />}
+          />
         </Route>
 
         <Route
@@ -64,10 +71,8 @@ function App() {
         >
           <Route index element={<EmployeeDashboard />} />
           <Route path="tasks" element={<ShowPosition />} />
-          <Route
-            path="candidate-votes/:candidateId"
-            element={<CandidateVotes />}
-          />
+
+          <Route path="result" element={<ResultPage />} />
         </Route>
 
         <Route path="*" element={<Login />} />

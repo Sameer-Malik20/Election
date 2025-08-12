@@ -213,7 +213,8 @@ export const voteNomination = async (req, res) => {
     }
 
     const signature = req.body.signature || "Unknown";
-    const userId = req.user?._id;
+
+    const userId = req.user?.id || req.user?._id || req.body.user;
 
     // NOTA handling
     if (req.body.nominationId === 0 || nominationId === "NOTA") {
@@ -246,12 +247,65 @@ export const voteNomination = async (req, res) => {
 
 export const getResults = async (req, res) => {
   try {
+    const userId = req.user?.id || req.user?._id || req.body.user;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    // Find nomination by user ID only
+    const nomination = await Nomination.findOne({
+      "votes.user": userId,
+    }).lean();
+
+    if (!nomination || !Array.isArray(nomination.votes)) {
+      return res.status(404).json({ message: "Vote not found" });
+    }
+
+    // Find the user's vote
+    const vote = nomination.votes.find(
+      (v) => v?.user?.toString() === userId?.toString()
+    );
+
+    if (!vote) {
+      return res.status(404).json({ message: "Vote not found" });
+    }
+
+    const diffMs = Date.now() - new Date(vote.votedAt).getTime();
+    const remainingMs = Math.max(0, 10 * 60 * 1000 - diffMs);
+
+    if (remainingMs > 0) {
+      return res.status(200).json({
+        status: "thanks",
+        message: "Thank you for voting",
+        remainingMs,
+      });
+    }
+
+    // Send results after 10 minutes or if no vote found
     const nominations = await Nomination.find({ isVerified: true })
       .populate("user", "name email")
+      .populate("votes.user", "name email")
       .lean();
 
-    // votes array bhi bheje
-    return res.status(200).json(nominations);
+    const winners = {};
+    const positions = [...new Set(nominations.map((n) => n.position))];
+
+    positions.forEach((position) => {
+      const candidates = nominations.filter((n) => n.position === position);
+      if (candidates.length === 0) return;
+
+      const sorted = candidates.sort(
+        (a, b) => (b.votes?.length || 0) - (a.votes?.length || 0)
+      );
+
+      winners[position] = sorted[0];
+    });
+
+    return res.status(200).json({
+      status: "results",
+      winners,
+    });
   } catch (error) {
     console.error("Result error:", error);
     return res.status(500).json({ message: "Server error" });

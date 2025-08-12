@@ -42,7 +42,7 @@ export default function EmployeeDashboard() {
       try {
         const token = localStorage.getItem("accessToken");
         const res = await fetch(
-          "https://election-4j7k.onrender.com/api/nomination/getall?type=nominations",
+          "http://localhost:5000/api/nomination/getall?type=nominations",
           {
             method: "GET",
             headers: {
@@ -81,6 +81,13 @@ export default function EmployeeDashboard() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Your Dashboard</h2>
+        <button
+          onClick={() => navigate("/employee/result")} // change to your results route
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          type="button"
+        >
+          Check Results
+        </button>
       </div>
 
       <div className="text-right text-sm text-gray-500">

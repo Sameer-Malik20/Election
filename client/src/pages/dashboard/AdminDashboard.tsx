@@ -1,5 +1,6 @@
 import { useEffect, useState, type JSX } from "react";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
+import { Link } from "react-router-dom";
 
 interface StatsCard {
   title: string;
@@ -24,7 +25,7 @@ interface Nomination {
   description?: string;
   position?: string;
   votes?: Vote[];
-  isVerified?: boolean; // यहाँ जोड़ें
+  isVerified?: boolean;
 }
 
 export default function AdminDashboard() {
@@ -36,13 +37,13 @@ export default function AdminDashboard() {
   const [, setMessage] = useState<string>("");
   const [, setIp] = useState<string>("Fetching...");
   const [, setSignature] = useState<string>("Fetching...");
+  const [, setMockStats] = useState<StatsCard[]>([]);
+  const [selectedCandidate] = useState<number | null>(null);
 
   // Assume selectedCandidate and positionList are defined somewhere in your code
 
   // handleVote function, if needed later, can be restored here
   // const handleVote = async () => {
-  //   ... (इसे फिर से लिखें यदि आवश्यक हो)
-  // };
 
   const fetchNominations = async () => {
     setLoading(true);
@@ -50,7 +51,7 @@ export default function AdminDashboard() {
     try {
       const token = localStorage.getItem("accessToken");
       const res = await fetch(
-        "https://election-4j7k.onrender.com/api/nomination/getall?type=nominations",
+        "http://localhost:5000/api/nomination/getall?type=nominations",
         {
           method: "GET",
           headers: {
@@ -72,6 +73,7 @@ export default function AdminDashboard() {
       } else {
         setError(data.message || "Failed to fetch nominations");
       }
+      setMockStats(stats);
     } catch (err) {
       console.error("Error fetching nominations:", err);
       setError("Error fetching nominations");
@@ -114,7 +116,7 @@ export default function AdminDashboard() {
     const token = localStorage.getItem("accessToken");
     if (!token) return;
 
-    fetch("https://election-4j7k.onrender.com/api/auth/count", {
+    fetch("http://localhost:5000/api/auth/count", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -125,11 +127,13 @@ export default function AdminDashboard() {
       })
       .then((data) => {
         setTotalUsers(data.totalUsers || 0);
+        console.log(data);
       })
       .catch((err) => {
         console.error("Fetch error:", err.message);
         setError(err.message);
       });
+
     fetchNominations();
   }, []);
 
@@ -269,8 +273,18 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium text-gray-500">
                       {stat.title}
                     </p>
+
                     <p className="text-2xl font-semibold text-gray-900 mt-1">
-                      {stat.value}
+                      {stat.title === "Total Users" ? (
+                        <Link
+                          to="/admin/usersdetails"
+                          className="text-blue-600 hover:underline"
+                        >
+                          {stat.value}
+                        </Link>
+                      ) : (
+                        stat.value
+                      )}
                     </p>
                   </div>
                   <div
@@ -321,11 +335,28 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {nominations.map((n) => {
-                      const uniqueVotesCount = new Set(
-                        (n.votes || [])
-                          .filter((v) => v.user?.name !== "NOTA")
-                          .map((v) => `${v.machineId}-${v.ipAddress}`)
-                      ).size;
+                      const uniqueVotesCount = (votes) => {
+                        const seenIps = new Set();
+                        const seenSignatures = new Set();
+                        let count = 0;
+
+                        votes.forEach(({ ip, signature }) => {
+                          if (selectedCandidate === 0) return;
+
+                          if (
+                            !seenIps.has(ip) &&
+                            !seenSignatures.has(signature)
+                          ) {
+                            // Agar IP ya signature dono abhi tak nahi aaye, tabhi count badhao
+                            count++;
+                            seenIps.add(ip);
+                            seenSignatures.add(signature);
+                          }
+                          // Agar IP ya signature pahle se mila to skip karo (duplicate)
+                        });
+
+                        return count;
+                      };
                       return (
                         <tr
                           key={n._id}
@@ -340,8 +371,11 @@ export default function AdminDashboard() {
                           <td className="px-4 py-3 border-b border-gray-200 text-gray-800">
                             {n.position || "N/A"}
                           </td>
-                          <td className="px-4 py-3 border-b border-gray-200 text-center font-semibold text-lg text-blue-600">
-                            {uniqueVotesCount}
+                          <td className="px-4 py-3 border-b border-gray-200 text-center font-semibold text-lg text-blue-600 cursor-pointer">
+                            <Link to={`/admin/candidate-votes/${n._id}`}>
+                              {uniqueVotesCount(n.votes)} Vote
+                              {uniqueVotesCount(n.votes) !== 1 ? "s" : ""}
+                            </Link>
                           </td>
                         </tr>
                       );

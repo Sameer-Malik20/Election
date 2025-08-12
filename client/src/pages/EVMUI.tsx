@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { Link } from "react-router-dom";
-
+import { useNavigate } from "react-router-dom";
 const AdvancedCorporateEVM = () => {
   const [selectedCandidate, setSelectedCandidate] = useState<number | null>(
     null
@@ -15,9 +15,7 @@ const AdvancedCorporateEVM = () => {
     CTO: false,
   });
   const [activePosition, setActivePosition] = useState("Select");
-  // @ts-ignore
-  const roleStatus = roles[roleName];
-  const [showCompletion, setShowCompletion] = useState(false);
+
   const [currentTime] = useState(new Date());
   const [batteryLevel, setBatteryLevel] = useState(100);
   const [isVoting, setIsVoting] = useState(false);
@@ -41,6 +39,50 @@ const AdvancedCorporateEVM = () => {
   const [nominations, setNominations] = useState([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [showVotes, setShowVotes] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const [showCompletion, setShowCompletion] = useState(false);
+  const [alreadyVoted, setAlreadyVoted] = useState(false);
+  const [userId] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    fetch("http://localhost:5000/api/auth/result", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+
+        let hasVoted = false;
+
+        Object.values(data.winners || {}).some((winner) =>
+          ((winner as { votes?: any[] }).votes || []).some((vote) => {
+            if (
+              vote.user?._id === userId ||
+              vote.signature === signature ||
+              vote.ip === ip
+            ) {
+              hasVoted = true;
+              return true;
+            }
+            return false;
+          })
+        );
+
+        if (hasVoted) setAlreadyVoted(true);
+      });
+  }, [userId, signature, ip]);
+
+  useEffect(() => {
+    if (alreadyVoted) {
+      alert("You are already voted");
+      navigate("/employee/result");
+    } else if (showCompletion) {
+      navigate("/employee/result");
+    }
+  }, [showCompletion, alreadyVoted, navigate]);
 
   //fetch positions
   const fetchAnnouncements = async () => {
@@ -49,16 +91,13 @@ const AdvancedCorporateEVM = () => {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(
-        "https://election-4j7k.onrender.com/api/auth/published",
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch("http://localhost:5000/api/auth/published", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await res.json();
 
@@ -83,7 +122,7 @@ const AdvancedCorporateEVM = () => {
     try {
       const token = localStorage.getItem("accessToken");
       const res = await fetch(
-        "https://election-4j7k.onrender.com/api/nomination/getall?type=nominations",
+        "http://localhost:5000/api/nomination/getall?type=nominations",
         {
           method: "GET",
           headers: {
@@ -303,7 +342,7 @@ const AdvancedCorporateEVM = () => {
 
       const token = localStorage.getItem("accessToken");
 
-      await fetch("https://election-4j7k.onrender.com/api/nomination/vote", {
+      await fetch("http://localhost:5000/api/nomination/vote", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -373,7 +412,7 @@ const AdvancedCorporateEVM = () => {
 
   // Total users count effect
   useEffect(() => {
-    fetch("https://election-4j7k.onrender.com/api/auth/count", {
+    fetch("http://localhost:5000/api/auth/count", {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
       },
