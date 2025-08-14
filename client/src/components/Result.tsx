@@ -67,7 +67,10 @@ export default function ResultPage() {
 
       if (res.ok) {
         // Filter verified nominations
-        const verifiedNominations = data.filter((n) => n.isVerified === true);
+        const verifiedNominations = data.filter(
+  (n) => n.isVerified === true && n.user !== null
+);
+
 
         // Process nominations for unique votes and voteCount
         const cleanNominations = verifiedNominations.map((nom) => {
