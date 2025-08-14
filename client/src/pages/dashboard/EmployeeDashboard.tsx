@@ -54,13 +54,12 @@ export default function EmployeeDashboard() {
         const data = await res.json();
 
         if (res.ok) {
-          const verifiedNominations = data.filter(
-            (n: Nomination) => n.isVerified
-          );
-          setNominations(verifiedNominations);
-        } else {
-          setError(data.message || "Failed to fetch nominations");
-        }
+  const verifiedNominations = data
+    .filter((n: Nomination) => n.isVerified && n.user !== null); 
+  setNominations(verifiedNominations);
+} else {
+  setError(data.message || "Failed to fetch nominations");
+}
       } catch (err: any) {
         setError(err.message || "Error fetching nominations");
       } finally {
