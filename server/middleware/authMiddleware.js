@@ -31,6 +31,7 @@ const authenticate = (roles = []) => {
 
       req.user = decoded;
       req.userId = decoded.id || decoded._id;
+
       next();
     } catch (error) {
       console.error("Authentication error:", error);

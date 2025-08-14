@@ -1,12 +1,15 @@
-import { Navigate } from 'react-router-dom';
-import { isAuthenticated, getUser } from '../utlis/auth';
+import { Navigate } from "react-router-dom";
+import { isAuthenticated, getUser } from "../utlis/auth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  role?: 'admin' | 'employee';
+  role?: "admin" | "employee" | "super";
 }
 
-export default function ProtectedRoute({ children, role }: ProtectedRouteProps) {
+export default function ProtectedRoute({
+  children,
+  role,
+}: ProtectedRouteProps) {
   const user = getUser();
 
   if (!isAuthenticated()) {
@@ -14,7 +17,18 @@ export default function ProtectedRoute({ children, role }: ProtectedRouteProps) 
   }
 
   if (role && user?.role !== role) {
-    return <Navigate to={user?.role === 'admin' ? '/admin' : '/employee'} replace />;
+    return (
+      <Navigate
+        to={
+          user?.role === "super"
+            ? "/super"
+            : user?.role === "admin"
+            ? "/admin"
+            : "/employee"
+        }
+        replace
+      />
+    );
   }
 
   return <>{children}</>;

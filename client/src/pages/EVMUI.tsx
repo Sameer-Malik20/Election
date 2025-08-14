@@ -48,7 +48,7 @@ const AdvancedCorporateEVM = () => {
     const token = localStorage.getItem("accessToken");
     if (!token) return;
 
-    fetch("https://election-4j7k.onrender.com/api/auth/result", {
+    fetch("http://localhost:5000/api/auth/result", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -91,16 +91,13 @@ const AdvancedCorporateEVM = () => {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(
-        "https://election-4j7k.onrender.com/api/auth/published",
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch("http://localhost:5000/api/auth/published", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await res.json();
 
@@ -125,7 +122,7 @@ const AdvancedCorporateEVM = () => {
     try {
       const token = localStorage.getItem("accessToken");
       const res = await fetch(
-        "https://election-4j7k.onrender.com/api/nomination/getall?type=nominations",
+        "http://localhost:5000/api/nomination/getall?type=nominations",
         {
           method: "GET",
           headers: {
@@ -345,7 +342,7 @@ const AdvancedCorporateEVM = () => {
 
       const token = localStorage.getItem("accessToken");
 
-      await fetch("https://election-4j7k.onrender.com/api/nomination/vote", {
+      await fetch("http://localhost:5000/api/nomination/vote", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -415,7 +412,7 @@ const AdvancedCorporateEVM = () => {
 
   // Total users count effect
   useEffect(() => {
-    fetch("https://election-4j7k.onrender.com/api/auth/count", {
+    fetch("http://localhost:5000/api/auth/count", {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
       },

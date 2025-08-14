@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { setAuthTokens } from "../../utlis/auth";
 import { api } from "../../utlis/api";
@@ -11,6 +11,8 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const navigate = useNavigate();
+  const [userId, setUserId] = useState("");
+  const [role, setRole] = useState<string | null>(localStorage.getItem("role"));
 
   // Request OTP API Call
   const handleSendOtp = async () => {
@@ -28,7 +30,7 @@ export default function Login() {
   };
 
   // Form Submit
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, userRole: string) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
@@ -44,12 +46,20 @@ export default function Login() {
           _id: string;
           name: string;
           email: string;
-          role: "employee" | "admin";
+          role: "employee" | "admin" | "super";
         };
       }>("/api/auth/login", { method: "POST", body: JSON.stringify(payload) });
-
+      localStorage.setItem("role", data.user.role);
+      setRole(data.user.role);
       setAuthTokens(data.accessToken, data.user);
-      navigate(data.user.role === "admin" ? "/admin" : "/employee");
+
+      if (data.user.role === "super") {
+        navigate("/super");
+      } else if (data.user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/employee");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {

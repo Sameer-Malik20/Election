@@ -27,7 +27,9 @@ const uploadData = async (req, res) => {
           address: String(u.address),
           password: String(u.password),
           role: "employee",
+          uploadedBy: req.userId,
         });
+
         inserted++;
       } catch (err) {
         skipped++;

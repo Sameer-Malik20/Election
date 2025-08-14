@@ -70,10 +70,15 @@ const userSchema = new mongoose.Schema(
     otpExpiresAt: { type: Date },
     role: {
       type: String,
-      enum: ["employee", "admin"],
+      enum: ["employee", "admin", "super"],
       default: "employee",
     },
     refreshToken: { type: String },
+    uploadedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      select: true,
+    },
   },
   {
     timestamps: true,

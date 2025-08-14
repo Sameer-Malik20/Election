@@ -1,7 +1,7 @@
 import { useEffect, useState, type JSX } from "react";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { Link } from "react-router-dom";
-
+import { useParams } from "react-router-dom";
 interface StatsCard {
   title: string;
   value: string | number;
@@ -28,7 +28,7 @@ interface Nomination {
   isVerified?: boolean;
 }
 
-export default function AdminDashboard() {
+export default function AdminDetails() {
   const [stats, setStats] = useState<StatsCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
@@ -39,6 +39,7 @@ export default function AdminDashboard() {
   const [, setSignature] = useState<string>("Fetching...");
   const [, setMockStats] = useState<StatsCard[]>([]);
   const [selectedCandidate] = useState<number | null>(null);
+  const { adminId } = useParams();
 
   // Assume selectedCandidate and positionList are defined somewhere in your code
 
@@ -50,20 +51,22 @@ export default function AdminDashboard() {
     setMessage("");
     try {
       const token = localStorage.getItem("accessToken");
+
       const userData = JSON.parse(localStorage.getItem("user") || "{}");
-      const adminId = userData._id; // current admin ID
+
       const res = await fetch(
-        "http://localhost:5000/api/nomination/getall?type=nominations",
+        `http://localhost:5000/api/nomination/getall?type=nominations&adminId=${adminId}`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         }
       );
 
       const data = await res.json();
+      console.log(data);
 
       if (res.ok) {
         // Filter verified nominations
@@ -72,9 +75,9 @@ export default function AdminDashboard() {
             n.isVerified === true &&
             n.user &&
             String(n.user.uploadedBy) === adminId;
-
           return isMatch;
         });
+        console.log(verifiedNominations);
 
         setNominations(verifiedNominations);
         setMessage("Verified nominations loaded successfully!");
@@ -124,12 +127,9 @@ export default function AdminDashboard() {
     const token = localStorage.getItem("accessToken");
     if (!token) return;
 
-    const userData = JSON.parse(localStorage.getItem("user") || "{}");
-    const storedUserId = userData._id;
-
-    fetch("http://localhost:5000/api/auth/count", {
+    fetch(`http://localhost:5000/api/auth/count?adminId=${adminId}`, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
       },
     })
       .then((res) => {
@@ -143,7 +143,7 @@ export default function AdminDashboard() {
             (user) =>
               user.role === "employee" &&
               user.uploadedBy &&
-              user.uploadedBy === storedUserId
+              user.uploadedBy === adminId
           ) || [];
 
         setTotalUsers(EmpUsers.length || 0);
@@ -296,7 +296,7 @@ export default function AdminDashboard() {
                     <p className="text-2xl font-semibold text-gray-900 mt-1">
                       {stat.title === "Total Users" ? (
                         <Link
-                          to="/admin/usersdetails"
+                          to={`/super/usersdetails/${adminId}`}
                           className="text-blue-600 hover:underline"
                         >
                           {stat.value}
@@ -391,7 +391,7 @@ export default function AdminDashboard() {
                             {n.position || "N/A"}
                           </td>
                           <td className="px-4 py-3 border-b border-gray-200 text-center font-semibold text-lg text-blue-600 cursor-pointer">
-                            <Link to={`/admin/candidate-votes/${n._id}`}>
+                            <Link to={`/super/candidate-votes/${n._id}`}>
                               {uniqueVotesCount(n.votes)} Vote
                               {uniqueVotesCount(n.votes) !== 1 ? "s" : ""}
                             </Link>

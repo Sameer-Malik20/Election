@@ -1,48 +1,21 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import FingerprintJS from "@fingerprintjs/fingerprintjs";
 
 interface Vote {
   ip: string;
   signature: string;
+  user: { name: string; phone: string; email: string } | null; // Fallback to null
 }
 
-const CandidateVotes = () => {
+const CandidateVotesbySuper = () => {
   const { candidateId } = useParams();
   const navigate = useNavigate();
   const [votes, setVotes] = useState<Vote[]>([]);
   const [candidateName, setCandidateName] = useState("");
+  const [candidatePhone, setCandidatePhone] = useState("");
+  const [candidateEmail, setCandidateEmail] = useState("");
   const [loading, setLoading] = useState(true);
-  const [, setIp] = useState("Fetching...");
-  const [, setSignature] = useState("Fetching...");
 
-  // IP fetch
-  useEffect(() => {
-    fetch("https://ipinfo.io/json")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.ip) {
-          setIp(data.ip);
-        } else {
-          setIp("Could not fetch IP");
-        }
-      })
-      .catch(() => {
-        setIp("Error fetching IP");
-      });
-  }, []);
-
-  // Fingerprint fetch
-  useEffect(() => {
-    const getFingerprint = async () => {
-      const fp = await FingerprintJS.load();
-      const result = await fp.get();
-      setSignature(result.visitorId);
-    };
-    getFingerprint();
-  }, []);
-
-  // Fetch votes
   useEffect(() => {
     const fetchVotes = async () => {
       const token = localStorage.getItem("accessToken");
@@ -52,13 +25,14 @@ const CandidateVotes = () => {
           Authorization: `Bearer ${token}`,
         },
       });
+
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
-        return; // Exit if unauthorized
+        return;
       }
+
       const data = await res.json();
-      console.log(data);
 
       if (res.ok) {
         if (data.votes) {
@@ -74,7 +48,6 @@ const CandidateVotes = () => {
     fetchVotes();
   }, [candidateId, navigate]);
 
-  // Define Vote interface
   const getUniqueVotes = (votes: Vote[]): Vote[] => {
     const seenIps = new Set<string>();
     const seenSignatures = new Set<string>();
@@ -122,6 +95,9 @@ const CandidateVotes = () => {
                     <th className="px-4 py-2 border-b border-blue-100 text-left">
                       Machine Signature
                     </th>
+                    <th className="px-4 py-2 border-b border-blue-100 text-left">
+                      Name
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -135,6 +111,9 @@ const CandidateVotes = () => {
                       </td>
                       <td className="px-4 py-2 border-b border-blue-50">
                         {v.signature}
+                      </td>
+                      <td className="px-4 py-2 border-b border-blue-50">
+                        {candidateName || "N/A"}{" "}
                       </td>
                     </tr>
                   ))}
@@ -154,4 +133,4 @@ const CandidateVotes = () => {
   );
 };
 
-export default CandidateVotes;
+export default CandidateVotesbySuper;

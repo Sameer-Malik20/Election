@@ -20,6 +20,12 @@ import CandidateVotes from "./components/CandidateVotes";
 import Navbar from "./components/navbar";
 import UserInfoSections from "./components/usersDetails";
 import ResultPage from "./components/Result";
+import SuperAdminDashboard from "./pages/dashboard/SuperAdminDash";
+import SuperLayout from "./layouts/SuperLayout";
+import AdminDetails from "./components/AdminDetails";
+import Userdetailsbysuper from "./components/userdetailsbysuper";
+import CandidateVotesbySuper from "./components/candidatevotebysuper";
+import CreateAdmin from "./components/registerbysuper";
 
 function ConditionalNavbar() {
   const location = useLocation();
@@ -41,6 +47,28 @@ function App() {
 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
+        {/* Super Admin */}
+        <Route
+          path="/super/*"
+          element={
+            <ProtectedRoute role="super">
+              <SuperLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<SuperAdminDashboard />} />
+          <Route path="admindash/:adminId" element={<AdminDetails />} />
+          <Route
+            path="usersdetails/:adminId"
+            element={<Userdetailsbysuper />}
+          />
+          <Route
+            path="candidate-votes/:candidateId"
+            element={<CandidateVotesbySuper />}
+          />
+          <Route path="createadmin" element={<CreateAdmin />} />
+        </Route>
 
         <Route
           path="/admin/*"

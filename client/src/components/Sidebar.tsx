@@ -1,17 +1,28 @@
 import { NavLink } from "react-router-dom";
 
-interface SidebarProps {
-  role: "admin" | "employee";
-  onLogout: () => void;
-}
+export default function Sidebar({ onLogout }: { onLogout: () => void }) {
+  // localStorage से role ले लो
+  const role = localStorage.getItem("role") as
+    | "admin"
+    | "super"
+    | "employee"
+    | null;
 
-export default function Sidebar({ role, onLogout }: SidebarProps) {
+  if (!role) return null; // role अभी available नहीं है
+
   const adminLinks = [
     { name: "Dashboard", path: "/admin" },
     { name: "Users Nomination", path: "/admin/users" },
     { name: "Reports", path: "/admin/notify" },
     { name: "Upload Data", path: "/admin/data" },
     { name: "Settings", path: "/admin/settings" },
+  ];
+
+  const superLinks = [
+    { name: "Dashboard", path: "/super" },
+    { name: "Manage Admins", path: "/super/admins" },
+    { name: "Create Admin", path: "/super/createadmin" },
+    { name: "Settings", path: "/super/settings" },
   ];
 
   const employeeLinks = [
@@ -21,7 +32,12 @@ export default function Sidebar({ role, onLogout }: SidebarProps) {
     { name: "Profile", path: "/employee/profile" },
   ];
 
-  const links = role === "admin" ? adminLinks : employeeLinks;
+  const links =
+    role === "admin"
+      ? adminLinks
+      : role === "super"
+      ? superLinks
+      : employeeLinks;
 
   return (
     <div className="hidden md:flex md:flex-shrink-0">
@@ -29,7 +45,11 @@ export default function Sidebar({ role, onLogout }: SidebarProps) {
         <div className="h-0 flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
           <div className="flex items-center flex-shrink-0 px-4">
             <h1 className="text-xl font-bold text-indigo-600">
-              {role === "admin" ? "Admin Portal" : "Employee Portal"}
+              {role === "admin"
+                ? "Admin Portal"
+                : role === "super"
+                ? "Super Admin Portal"
+                : "Employee Portal"}
             </h1>
           </div>
 
@@ -58,26 +78,22 @@ export default function Sidebar({ role, onLogout }: SidebarProps) {
             className="flex-shrink-0 w-full group block"
           >
             <div className="flex items-center">
-              <div>
-                <svg
-                  className="h-6 w-6 text-red-500 group-hover:text-red-700"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
-                  Sign out
-                </p>
-              </div>
+              <svg
+                className="h-6 w-6 text-red-500 group-hover:text-red-700"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
+              <span className="ml-3 text-sm font-medium text-gray-700 group-hover:text-gray-900">
+                Sign out
+              </span>
             </div>
           </button>
         </div>

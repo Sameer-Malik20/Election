@@ -19,7 +19,7 @@ export default function ResultPage() {
 
   // Total users count effect
   useEffect(() => {
-    fetch("https://election-4j7k.onrender.com/api/auth/count", {
+    fetch("http://localhost:5000/api/auth/count", {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
       },
@@ -52,7 +52,7 @@ export default function ResultPage() {
     try {
       const token = localStorage.getItem("accessToken");
       const res = await fetch(
-        "https://election-4j7k.onrender.com/api/nomination/getall?type=nominations",
+        "http://localhost:5000/api/nomination/getall?type=nominations",
         {
           method: "GET",
           headers: {
@@ -116,15 +116,12 @@ export default function ResultPage() {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(
-        "https://election-4j7k.onrender.com/api/auth/published",
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch("http://localhost:5000/api/auth/published", {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
@@ -226,7 +223,10 @@ export default function ResultPage() {
       setError("User not authenticated");
       return;
     }
-    const storedUserId = localStorage.getItem("userId");
+
+    const userData = JSON.parse(localStorage.getItem("user") || "{}");
+    const storedUserId = userData._id;
+
     if (storedUserId) setUserId(storedUserId);
     else setError("User ID not found");
   }, []);
@@ -241,7 +241,7 @@ export default function ResultPage() {
       return;
     }
 
-    fetch("https://election-4j7k.onrender.com/api/auth/result", {
+    fetch("http://localhost:5000/api/auth/result", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {

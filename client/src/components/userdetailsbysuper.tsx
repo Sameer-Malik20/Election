@@ -1,6 +1,6 @@
 // UserInfoSections.tsx
 import { useEffect, useState } from "react";
-
+import { useParams } from "react-router-dom";
 interface User {
   name: string;
   email: string;
@@ -9,19 +9,17 @@ interface User {
   role: string;
 }
 
-export default function UserInfoSections() {
+export default function Userdetailsbysuper() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading] = useState(false);
   const [, setError] = useState("");
+  const { adminId } = useParams();
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    if (!token) return;
+    if (!token || !adminId) return;
 
-    const userData = JSON.parse(localStorage.getItem("user") || "{}");
-    const storedUserId = userData._id;
-
-    fetch("http://localhost:5000/api/auth/count", {
+    fetch(`http://localhost:5000/api/auth/count?adminId=${adminId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -36,16 +34,16 @@ export default function UserInfoSections() {
             (user) =>
               user.role === "employee" &&
               user.uploadedBy &&
-              user.uploadedBy === storedUserId
+              String(user.uploadedBy) === String(adminId)
           ) || [];
 
-        setUsers(empUsers || []);
+        setUsers(empUsers);
       })
       .catch((err) => {
         console.error("Fetch error:", err.message);
         setError(err.message);
       });
-  }, []);
+  }, [adminId]);
 
   if (loading) return <p>Loading...</p>;
 
