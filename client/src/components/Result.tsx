@@ -145,7 +145,7 @@ export default function ResultPage() {
 
       const votingStartTime = new Date(announcement.createdAt).getTime();
 
-      const VOTING_DURATION = 20 * 60 * 1000; // 5 minutes
+      const VOTING_DURATION = 24* 60 * 60 * 1000; 
       const now = Date.now();
 
       let countdownEnd = votingStartTime + VOTING_DURATION;
