@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { setAuthTokens } from "../../utlis/auth";
 import { api } from "../../utlis/api";
@@ -11,8 +11,8 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const navigate = useNavigate();
-  const [userId, setUserId] = useState("");
-  const [role, setRole] = useState<string | null>(localStorage.getItem("role"));
+
+  const [, setRole] = useState<string | null>(localStorage.getItem("role"));
 
   // Request OTP API Call
   const handleSendOtp = async () => {
@@ -30,7 +30,7 @@ export default function Login() {
   };
 
   // Form Submit
-  const handleSubmit = async (e: React.FormEvent, userRole: string) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");

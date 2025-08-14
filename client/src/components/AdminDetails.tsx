@@ -50,10 +50,6 @@ export default function AdminDetails() {
     setLoading(true);
     setMessage("");
     try {
-      const token = localStorage.getItem("accessToken");
-
-      const userData = JSON.parse(localStorage.getItem("user") || "{}");
-
       const res = await fetch(
         `http://localhost:5000/api/nomination/getall?type=nominations&adminId=${adminId}`,
         {

@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-interface Admin {
-  _id: string;
-  name: string;
-  email: string;
-  phone: string;
-}
+import type { JSX } from "react/jsx-runtime";
 
 interface StatsCard {
   title: string;
@@ -16,16 +11,15 @@ interface StatsCard {
 }
 
 const SuperAdminDashboard: React.FC = () => {
-  const [admins, setAdmins] = useState<Admin[]>([]);
   const [search, setSearch] = useState("");
   const [stats, setStats] = useState<StatsCard[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>("");
+  const [, setLoading] = useState(true);
+  const [, setError] = useState<string>("");
   const [totalAdmin, setTotalAdmin] = useState<number>(0);
   const [adminUsers, SetadminUsers] = useState([]);
-  const [totalusers, settotalusers] = useState<number>(0);
+
   const [totalUsersCount, setTotalUsersCount] = useState(0);
-  const [employeeUsers, setEmployeeUsers] = useState([]);
+  const [, setEmployeeUsers] = useState([]);
   const navigate = useNavigate();
   // Filter admins by search
 
@@ -47,13 +41,6 @@ const SuperAdminDashboard: React.FC = () => {
           data.users?.filter((user) => user.role === "admin") || [];
         setTotalAdmin(adminUsers.length);
         SetadminUsers(adminUsers);
-
-        const filteredAdmins = admins.filter(
-          (admin) =>
-            admin.name.toLowerCase().includes(search.toLowerCase()) ||
-            admin.email.toLowerCase().includes(search.toLowerCase()) ||
-            admin.phone.includes(search)
-        );
       })
       .catch((err) => {
         console.error("Fetch error:", err.message);

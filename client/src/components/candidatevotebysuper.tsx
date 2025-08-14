@@ -12,8 +12,6 @@ const CandidateVotesbySuper = () => {
   const navigate = useNavigate();
   const [votes, setVotes] = useState<Vote[]>([]);
   const [candidateName, setCandidateName] = useState("");
-  const [candidatePhone, setCandidatePhone] = useState("");
-  const [candidateEmail, setCandidateEmail] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
