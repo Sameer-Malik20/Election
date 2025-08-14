@@ -14,7 +14,10 @@ import Nomination from "./models/Nomination.js";
 // Use CORS
 app.use(
   cors({
-    origin: "https://electionvoting.netlify.app",
+    origin: [
+      "https://electionvoting.netlify.app",
+      "http://localhost:5173"
+    ],
     credentials: true,
   })
 );
