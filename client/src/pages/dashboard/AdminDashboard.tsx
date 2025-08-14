@@ -53,7 +53,7 @@ export default function AdminDashboard() {
       const userData = JSON.parse(localStorage.getItem("user") || "{}");
       const adminId = userData._id; // current admin ID
       const res = await fetch(
-        "http://localhost:5000/api/nomination/getall?type=nominations",
+        "https://election-4j7k.onrender.com/api/nomination/getall?type=nominations",
         {
           method: "GET",
           headers: {
@@ -127,7 +127,7 @@ export default function AdminDashboard() {
     const userData = JSON.parse(localStorage.getItem("user") || "{}");
     const storedUserId = userData._id;
 
-    fetch("http://localhost:5000/api/auth/count", {
+    fetch("https://election-4j7k.onrender.com/api/auth/count", {
       headers: {
         Authorization: `Bearer ${token}`,
       },

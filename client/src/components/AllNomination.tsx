@@ -44,7 +44,7 @@ const AllNominations: React.FC = () => {
       const adminId = String(userData._id); // current admin ID
 
       const res = await fetch(
-        "http://localhost:5000/api/nomination/getall?type=nominations",
+        "https://election-4j7k.onrender.com/api/nomination/getall?type=nominations",
         {
           method: "GET",
           headers: {
@@ -86,7 +86,7 @@ const AllNominations: React.FC = () => {
     const token = localStorage.getItem("accessToken");
     try {
       const res = await fetch(
-        `http://localhost:5000/api/nomination/verify/${id}`,
+        `https://election-4j7k.onrender.com/api/nomination/verify/${id}`,
         {
           method: "PUT",
           headers: {
@@ -124,7 +124,7 @@ const AllNominations: React.FC = () => {
     const token = localStorage.getItem("accessToken");
     try {
       const res = await fetch(
-        `http://localhost:5000/api/nomination/reject/${currentNominationId}`,
+        `https://election-4j7k.onrender.com/api/nomination/reject/${currentNominationId}`,
         {
           method: "PUT",
           headers: {
@@ -156,10 +156,13 @@ const AllNominations: React.FC = () => {
 
     const token = localStorage.getItem("accessToken");
     try {
-      const res = await fetch(`http://localhost:5000/api/nomination/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `https://election-4j7k.onrender.com/api/nomination/${id}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
