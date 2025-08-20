@@ -21,7 +21,7 @@ export default function UserInfoSections() {
     const userData = JSON.parse(localStorage.getItem("user") || "{}");
     const storedUserId = userData._id;
 
-    fetch("http://localhost:5000/api/auth/count", {
+    fetch("https://election-4j7k.onrender.com/api/auth/count", {
       headers: {
         Authorization: `Bearer ${token}`,
       },

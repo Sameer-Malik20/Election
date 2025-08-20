@@ -43,7 +43,7 @@ export default function EmployeeDashboard() {
       try {
         const token = localStorage.getItem("accessToken");
         const res = await fetch(
-          "http://localhost:5000/api/nomination/getall?type=nominations",
+          "https://election-4j7k.onrender.com/api/nomination/getall?type=nominations",
           {
             method: "GET",
             headers: {

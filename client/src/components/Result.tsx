@@ -19,7 +19,7 @@ export default function ResultPage() {
 
   // Total users count effect
   useEffect(() => {
-    fetch("http://localhost:5000/api/auth/count", {
+    fetch("https://election-4j7k.onrender.com/api/auth/count", {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
       },
@@ -34,7 +34,7 @@ export default function ResultPage() {
     try {
       const token = localStorage.getItem("accessToken");
       const res = await fetch(
-        "http://localhost:5000/api/nomination/getall?type=nominations",
+        "https://election-4j7k.onrender.com/api/nomination/getall?type=nominations",
         {
           method: "GET",
           headers: {
@@ -101,12 +101,15 @@ export default function ResultPage() {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch("http://localhost:5000/api/auth/published", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetch(
+        "https://election-4j7k.onrender.com/api/auth/published",
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
@@ -230,7 +233,7 @@ export default function ResultPage() {
       return;
     }
 
-    fetch("http://localhost:5000/api/auth/result", {
+    fetch("https://election-4j7k.onrender.com/api/auth/result", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {

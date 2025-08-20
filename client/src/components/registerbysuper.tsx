@@ -34,21 +34,24 @@ export default function CreateAdmin() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          password: formData.password,
-          role: "admin",
-        }),
-      });
+      const res = await fetch(
+        "https://election-4j7k.onrender.com/api/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            address: formData.address,
+            password: formData.password,
+            role: "admin",
+          }),
+        }
+      );
 
       if (!res.ok) {
         throw new Error("Failed to create admin");

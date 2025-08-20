@@ -46,12 +46,15 @@ const CandidateVotes = () => {
   useEffect(() => {
     const fetchVotes = async () => {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(`http://localhost:5000/api/auth/${candidateId}`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetch(
+        `https://election-4j7k.onrender.com/api/auth/${candidateId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");

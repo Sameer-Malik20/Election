@@ -54,12 +54,15 @@ const PositionsList: React.FC = () => {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch("http://localhost:5000/api/auth/published", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetch(
+        "https://election-4j7k.onrender.com/api/auth/published",
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
@@ -89,13 +92,16 @@ const PositionsList: React.FC = () => {
   const fetchMyNomination = async () => {
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch("http://localhost:5000/api/auth/myNom", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetch(
+        "https://election-4j7k.onrender.com/api/auth/myNom",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
@@ -143,17 +149,20 @@ const PositionsList: React.FC = () => {
 
     const token = localStorage.getItem("accessToken");
     try {
-      const res = await fetch("http://localhost:5000/api/nomination/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          position: selectedAnnouncement?.announcement?.title,
-          description: resulation,
-        }),
-      });
+      const res = await fetch(
+        "https://election-4j7k.onrender.com/api/nomination/create",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            position: selectedAnnouncement?.announcement?.title,
+            description: resulation,
+          }),
+        }
+      );
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");

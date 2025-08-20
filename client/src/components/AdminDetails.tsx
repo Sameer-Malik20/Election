@@ -53,7 +53,7 @@ export default function AdminDetails() {
     setMessage("");
     try {
       const res = await fetch(
-        `http://localhost:5000/api/nomination/getall?type=nominations&adminId=${adminId}`,
+        `https://election-4j7k.onrender.com/api/nomination/getall?type=nominations&adminId=${adminId}`,
         {
           method: "GET",
           headers: {
@@ -152,11 +152,14 @@ export default function AdminDetails() {
     const token = localStorage.getItem("accessToken");
     if (!token) return;
 
-    fetch(`http://localhost:5000/api/auth/count?adminId=${adminId}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-      },
-    })
+    fetch(
+      `https://election-4j7k.onrender.com/api/auth/count?adminId=${adminId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      }
+    )
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();

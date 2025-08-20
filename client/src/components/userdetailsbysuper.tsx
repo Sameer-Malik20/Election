@@ -19,11 +19,14 @@ export default function Userdetailsbysuper() {
     const token = localStorage.getItem("accessToken");
     if (!token || !adminId) return;
 
-    fetch(`http://localhost:5000/api/auth/count?adminId=${adminId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    fetch(
+      `https://election-4j7k.onrender.com/api/auth/count?adminId=${adminId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();
