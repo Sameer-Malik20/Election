@@ -38,6 +38,8 @@ export default function AdminDetails() {
   const [, setIp] = useState<string>("Fetching...");
   const [, setSignature] = useState<string>("Fetching...");
   const [, setMockStats] = useState<StatsCard[]>([]);
+  const [countPosition, SetCountPosition] = useState<number>(0);
+  const [completedCount, SetCompletedCount] = useState<number>(0);
   const [selectedCandidate] = useState<number | null>(null);
   const { adminId } = useParams();
 
@@ -51,7 +53,7 @@ export default function AdminDetails() {
     setMessage("");
     try {
       const res = await fetch(
-        `https://election-4j7k.onrender.com/api/nomination/getall?type=nominations&adminId=${adminId}`,
+        `http://localhost:5000/api/nomination/getall?type=nominations&adminId=${adminId}`,
         {
           method: "GET",
           headers: {
@@ -69,12 +71,39 @@ export default function AdminDetails() {
         const verifiedNominations = data.filter((n: any) => {
           const isMatch =
             n.isVerified === true &&
+            n.isElectionCompleted === false &&
             n.user &&
             String(n.user.uploadedBy) === adminId;
+
           return isMatch;
         });
-        console.log(verifiedNominations);
 
+        const completed = data.filter((n: any) => {
+          const isMatch =
+            n.isVerified === true &&
+            n.isElectionCompleted === true &&
+            n.user &&
+            String(n.user.uploadedBy) === adminId;
+
+          return isMatch;
+        });
+
+        const ElectionPro = data.filter((n: any) => {
+          const isMatch =
+            n.isVerified === true &&
+            n.isElectionCompleted === false &&
+            n.user &&
+            String(n.user.uploadedBy) === adminId;
+
+          return isMatch;
+        });
+
+        // ✅ sirf count chahiye
+        const completedCount = completed.length;
+
+        SetCompletedCount(completedCount);
+
+        SetCountPosition(ElectionPro.length || 0);
         setNominations(verifiedNominations);
         setMessage("Verified nominations loaded successfully!");
       } else {
@@ -123,14 +152,11 @@ export default function AdminDetails() {
     const token = localStorage.getItem("accessToken");
     if (!token) return;
 
-    fetch(
-      `https://election-4j7k.onrender.com/api/auth/count?adminId=${adminId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
-      }
-    )
+    fetch(`http://localhost:5000/api/auth/count?adminId=${adminId}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+      },
+    })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();
@@ -233,6 +259,46 @@ export default function AdminDetails() {
             ),
             change: -3,
           },
+          {
+            title: "Election processing",
+            value: countPosition,
+            icon: (
+              <svg
+                className="w-8 h-8"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            ),
+            change: 8,
+          },
+          {
+            title: "Completed election",
+            value: completedCount,
+            icon: (
+              <svg
+                className="w-8 h-8"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            ),
+            change: 8,
+          },
         ];
 
         await new Promise((resolve) => setTimeout(resolve, 800));
@@ -247,7 +313,7 @@ export default function AdminDetails() {
     };
 
     fetchDashboardData();
-  }, [totalUsers, voterCount, userRemaining]);
+  }, [totalUsers, voterCount, userRemaining, countPosition, completedCount]);
 
   return (
     <div className="space-y-6">
@@ -300,6 +366,20 @@ export default function AdminDetails() {
                         >
                           {stat.value}
                         </Link>
+                      ) : stat.title === "Election processing" ? (
+                        <Link
+                          to={`/super/processele/${adminId}`}
+                          className="text-blue-600 hover:underline"
+                        >
+                          {stat.value}
+                        </Link>
+                      ) : stat.title === "Completed election" ? (
+                        <Link
+                          to={`/super/completedele/${adminId}`}
+                          className="text-blue-600 hover:underline"
+                        >
+                          {stat.value}
+                        </Link>
                       ) : (
                         stat.value
                       )}
@@ -341,7 +421,7 @@ export default function AdminDetails() {
                         Candidate Name
                       </th>
                       <th className="px-4 py-3 border-b border-gray-300 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
-                        Candidate Bio
+                        Candidate resulation
                       </th>
                       <th className="px-4 py-3 border-b border-gray-300 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
                         Position

@@ -8,7 +8,7 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
     | "employee"
     | null;
 
-  if (!role) return null; // role अभी available नहीं है
+  if (!role) return null;
 
   const adminLinks = [
     { name: "Dashboard", path: "/admin" },

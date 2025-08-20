@@ -12,14 +12,14 @@ export default function ResultPage() {
   const [signature, setSignature] = useState(null);
   const [ip, setIp] = useState(null);
   const [, setAnnouncements] = useState([]);
-  const [, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [, setMessage] = useState("");
   const navigate = useNavigate();
   const [, setTotalUsers] = useState(0);
 
   // Total users count effect
   useEffect(() => {
-    fetch("https://election-4j7k.onrender.com/api/auth/count", {
+    fetch("http://localhost:5000/api/auth/count", {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
       },
@@ -28,31 +28,13 @@ export default function ResultPage() {
       .then((data) => setTotalUsers(data.totalUsers));
   }, []);
 
-  const uniqueVotesCount = (votes) => {
-    const seenIps = new Set();
-    const seenSignatures = new Set();
-    let count = 0;
-
-    votes.forEach(({ ip, signature }) => {
-      if (!ip && !signature) return; // skip if both missing
-
-      if (!seenIps.has(ip) && !seenSignatures.has(signature)) {
-        count++;
-        if (ip) seenIps.add(ip);
-        if (signature) seenSignatures.add(signature);
-      }
-    });
-
-    return count;
-  };
-
   const fetchNominations = async () => {
     setLoading(true);
     setMessage("");
     try {
       const token = localStorage.getItem("accessToken");
       const res = await fetch(
-        "https://election-4j7k.onrender.com/api/nomination/getall?type=nominations",
+        "http://localhost:5000/api/nomination/getall?type=nominations",
         {
           method: "GET",
           headers: {
@@ -63,21 +45,22 @@ export default function ResultPage() {
       );
 
       const data = await res.json();
-      console.log(data);
+      console.log("only", data[0]);
 
       if (res.ok) {
         // Filter verified nominations
-        const verifiedNominations = data.filter((n) => n.isVerified === true);
+        // 1. Filter verified and completed nominations
+        const verifiedNominations = data.filter(
+          (n) => n.isVerified && n.isElectionCompleted && n.user
+        );
 
-        // Process nominations for unique votes and voteCount
+        // 2. Map nominations and calculate voteCount
         const cleanNominations = verifiedNominations.map((nom) => {
-          // Filter votes with either ip or signature
           const filteredVotes = (nom.votes || []).filter(
             ({ ip, signature }) => ip || signature
           );
 
-          // Calculate unique votes count
-          const voteCount = uniqueVotesCount(filteredVotes);
+          const voteCount = filteredVotes.length; // ya uniqueVotesCount(filteredVotes)
 
           return {
             ...nom,
@@ -86,18 +69,20 @@ export default function ResultPage() {
           };
         });
 
-        // Sort nominations by voteCount descending so highest votes first
+        // 3. Sort descending by votes
         cleanNominations.sort((a, b) => b.voteCount - a.voteCount);
 
-        // Mark winner (top voteCount wale ko)
+        // 4. Mark winner per position
         if (cleanNominations.length > 0) {
-          const winnerId = cleanNominations[0]._id;
-          cleanNominations.forEach((nom) => {
-            nom.isWinner = nom._id === winnerId;
-          });
+          console.log(cleanNominations);
+          setNominations([cleanNominations[0]]);
+          console.log("only first", cleanNominations[0]);
+        } else {
+          setNominations([]);
         }
 
-        setNominations(cleanNominations);
+        // 5. Set state
+
         setMessage("Verified nominations loaded successfully!");
       } else {
         setError(data.message || "Failed to fetch nominations");
@@ -116,15 +101,12 @@ export default function ResultPage() {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(
-        "https://election-4j7k.onrender.com/api/auth/published",
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch("http://localhost:5000/api/auth/published", {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
@@ -132,7 +114,6 @@ export default function ResultPage() {
       }
 
       const data = await res.json();
-      console.log("data announcement", data[0].announcement.title);
 
       const announcement = data?.[0];
       if (!announcement) {
@@ -141,8 +122,7 @@ export default function ResultPage() {
       }
 
       const votingStartTime = new Date(announcement.createdAt).getTime();
-
-      const VOTING_DURATION = 20 * 60 * 1000; // 5 minutes
+      const VOTING_DURATION = 24 * 60 * 60 * 1000; // 15 minutes
       const now = Date.now();
 
       let countdownEnd = votingStartTime + VOTING_DURATION;
@@ -151,7 +131,10 @@ export default function ResultPage() {
       let userVoteTime: number | null = null;
 
       Object.values(data.winners || {}).some((winnerNom) =>
-        ((winnerNom as { votes?: any[] }).votes || []).some((vote) => {
+        (Array.isArray((winnerNom as { votes?: any[] }).votes)
+          ? (winnerNom as { votes?: any[] }).votes
+          : []
+        ).some((vote) => {
           const voteUserId = vote.user?._id || "";
           const voteSignature = vote.signature || "";
           const voteIp = vote.ip || "";
@@ -214,9 +197,12 @@ export default function ResultPage() {
       const result = await fp.get();
       setSignature(result.visitorId);
     };
+    getFingerprint();
+  }, []);
+
+  useEffect(() => {
     fetchAnnouncements();
     fetchNominations();
-    getFingerprint();
   }, []);
 
   // Get userId from localStorage
@@ -244,7 +230,7 @@ export default function ResultPage() {
       return;
     }
 
-    fetch("https://election-4j7k.onrender.com/api/auth/result", {
+    fetch("http://localhost:5000/api/auth/result", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -255,14 +241,17 @@ export default function ResultPage() {
         return res.json();
       })
       .then((data) => {
-        console.log("data", data);
+        console.log("result", data);
 
         const winners = data.winners || {};
         let hasVoted = false;
 
         // Check if user has voted
         Object.values(winners).some((winnerNom) =>
-          ((winnerNom as { votes?: any[] }).votes || []).some((vote) => {
+          (Array.isArray((winnerNom as { votes?: any[] }).votes)
+            ? (winnerNom as { votes?: any[] }).votes
+            : []
+          ).some((vote) => {
             const voteUserId = vote.user?._id || "";
             const voteSignature = vote.signature || "";
             const voteIp = vote.ip || "";
@@ -279,13 +268,7 @@ export default function ResultPage() {
           })
         );
 
-        if (hasVoted) {
-          setStatus("thanks");
-        } else {
-          setStatus("waitingForResults");
-        }
-
-        // Remove duplicate votes per nomination
+        // nominations cleanup
         const cleanNominations = (data.nominations || []).map((nom) => {
           const uniqueVoters = new Set();
           const uniqueVotes = [];
@@ -302,18 +285,27 @@ export default function ResultPage() {
           return { ...nom, votes: uniqueVotes, voteCount: uniqueVotes.length };
         });
 
-        // Sort nominations by voteCount descending
         cleanNominations.sort((a, b) => b.voteCount - a.voteCount);
 
-        // Mark winner - top voteCount wala nomination
-        if (cleanNominations.length > 0) {
+        // Mark winner if status is "results"
+        if (data.status === "results" && cleanNominations.length > 0) {
           const winnerId = cleanNominations[0]._id;
           cleanNominations.forEach((nom) => {
             nom.isWinner = nom._id === winnerId;
           });
         }
 
-        setNominations(cleanNominations);
+        if (Array.isArray(data.nominations) && data.nominations.length > 0) {
+          setNominations(cleanNominations);
+        }
+        // Set status based on backend
+        if (data.status === "results") {
+          setStatus("results"); // backend says results are ready
+        } else if (hasVoted) {
+          setStatus("thanks");
+        } else {
+          setStatus("waitingForResults");
+        }
       })
       .catch((err) => {
         if (err.message !== "Unauthorized") setError("Failed to load data");
@@ -322,32 +314,24 @@ export default function ResultPage() {
   }, [userId, signature, ip]);
 
   useEffect(() => {
-    if (timeLeft <= 0) {
-      setStatus("results");
+    if (timeLeft <= 0) return;
 
-      if (nominations.length > 0) {
-        const nominationsWithVoteCount = nominations.map((nom) => ({
-          ...nom,
-          voteCount: nom.votes.length,
-        }));
+    const timerId = setTimeout(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          // Countdown khatam → status update
+          if (status === "thanks" || status === "waitingForResults") {
+            setStatus("results");
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
-        nominationsWithVoteCount.sort((a, b) => b.voteCount - a.voteCount);
-        const winner = nominationsWithVoteCount[0];
-
-        setNominations(
-          nominationsWithVoteCount.map((nom) => ({
-            ...nom,
-            isWinner: nom._id === winner._id,
-          }))
-        );
-      }
-
-      return; // stop timer
-    }
-
-    const timerId = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
     return () => clearTimeout(timerId);
-  }, [timeLeft, nominations]);
+  }, [timeLeft, status]);
+
   // Only timeLeft as dependency
 
   const formatTime = (secs) => {
@@ -369,7 +353,8 @@ export default function ResultPage() {
     );
   }
 
-  if (status === "thanks" || status === "waitingForResults") {
+  // Show countdown first
+  if (timeLeft > 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 text-center p-4">
         <div className="text-green-600 text-6xl mb-4">✅</div>
@@ -386,7 +371,16 @@ export default function ResultPage() {
     );
   }
 
-  if (status === "results") {
+  // After countdown finished, show results or loading
+  if (timeLeft === 0) {
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+          <p className="text-gray-600">Loading results...</p>
+        </div>
+      );
+    }
+
     if (nominations.length === 0) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
@@ -406,7 +400,7 @@ export default function ResultPage() {
             }`}
           >
             <h3 className="font-semibold text-lg mb-2">
-              Position: {nomination.title} (Rank: {index + 1})
+              Position: {nomination.position} (Rank: {index + 1})
             </h3>
             <p
               className={`font-bold ${
@@ -423,10 +417,4 @@ export default function ResultPage() {
       </div>
     );
   }
-
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      Loading...
-    </div>
-  );
 }

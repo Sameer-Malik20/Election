@@ -44,7 +44,7 @@ const AllNominations: React.FC = () => {
       const adminId = String(userData._id); // current admin ID
 
       const res = await fetch(
-        "https://election-4j7k.onrender.com/api/nomination/getall?type=nominations",
+        "http://localhost:5000/api/nomination/getall?type=nominations",
         {
           method: "GET",
           headers: {
@@ -65,7 +65,10 @@ const AllNominations: React.FC = () => {
       if (res.ok) {
         // Filter verified nominations
         const filterNominations = data.filter((n: any) => {
-          const isMatch = n.user && String(n.user.uploadedBy) === adminId;
+          const isMatch =
+            n.user &&
+            n.isElectionCompleted === false &&
+            String(n.user.uploadedBy) === adminId;
           return isMatch;
         });
 
@@ -86,7 +89,7 @@ const AllNominations: React.FC = () => {
     const token = localStorage.getItem("accessToken");
     try {
       const res = await fetch(
-        `https://election-4j7k.onrender.com/api/nomination/verify/${id}`,
+        `http://localhost:5000/api/nomination/verify/${id}`,
         {
           method: "PUT",
           headers: {
@@ -124,7 +127,7 @@ const AllNominations: React.FC = () => {
     const token = localStorage.getItem("accessToken");
     try {
       const res = await fetch(
-        `https://election-4j7k.onrender.com/api/nomination/reject/${currentNominationId}`,
+        `http://localhost:5000/api/nomination/reject/${currentNominationId}`,
         {
           method: "PUT",
           headers: {
@@ -156,13 +159,10 @@ const AllNominations: React.FC = () => {
 
     const token = localStorage.getItem("accessToken");
     try {
-      const res = await fetch(
-        `https://election-4j7k.onrender.com/api/nomination/${id}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await fetch(`http://localhost:5000/api/nomination/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
@@ -217,7 +217,7 @@ const AllNominations: React.FC = () => {
                 Position
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Bio
+                resulation
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Date
@@ -244,7 +244,7 @@ const AllNominations: React.FC = () => {
                     className="px-6 py-4 text-sm truncate max-w-xs"
                     title={nom.description}
                   >
-                    {nom.description || "No bio provided"}
+                    {nom.description || "No resulation provided"}
                   </td>
                   <td className="px-6 py-4 text-sm">
                     {new Date(nom.createdAt).toLocaleString()}

@@ -38,12 +38,8 @@ export default function AdminDashboard() {
   const [, setIp] = useState<string>("Fetching...");
   const [, setSignature] = useState<string>("Fetching...");
   const [, setMockStats] = useState<StatsCard[]>([]);
-  const [selectedCandidate] = useState<number | null>(null);
-
-  // Assume selectedCandidate and positionList are defined somewhere in your code
-
-  // handleVote function, if needed later, can be restored here
-  // const handleVote = async () => {
+  const [countPosition, SetCountPosition] = useState<number>(0);
+  const [completedCount, SetCompletedCount] = useState<number>(0);
 
   const fetchNominations = async () => {
     setLoading(true);
@@ -53,7 +49,7 @@ export default function AdminDashboard() {
       const userData = JSON.parse(localStorage.getItem("user") || "{}");
       const adminId = userData._id; // current admin ID
       const res = await fetch(
-        "https://election-4j7k.onrender.com/api/nomination/getall?type=nominations",
+        "http://localhost:5000/api/nomination/getall?type=nominations",
         {
           method: "GET",
           headers: {
@@ -64,18 +60,46 @@ export default function AdminDashboard() {
       );
 
       const data = await res.json();
+      console.log(data);
 
       if (res.ok) {
         // Filter verified nominations
         const verifiedNominations = data.filter((n: any) => {
           const isMatch =
             n.isVerified === true &&
+            n.isElectionCompleted === false &&
             n.user &&
             String(n.user.uploadedBy) === adminId;
 
           return isMatch;
         });
 
+        const completed = data.filter((n: any) => {
+          const isMatch =
+            n.isVerified === true &&
+            n.isElectionCompleted === true &&
+            n.user &&
+            String(n.user.uploadedBy) === adminId;
+
+          return isMatch;
+        });
+
+        const ElectionPro = data.filter((n: any) => {
+          const isMatch =
+            n.isVerified === true &&
+            n.isElectionCompleted === false &&
+            n.user &&
+            String(n.user.uploadedBy) === adminId;
+
+          return isMatch;
+        });
+
+        // ✅ sirf count chahiye
+        const completedCount = completed.length;
+
+        SetCompletedCount(completedCount);
+
+        SetCountPosition(ElectionPro.length || 0);
         setNominations(verifiedNominations);
         setMessage("Verified nominations loaded successfully!");
       } else {
@@ -127,7 +151,7 @@ export default function AdminDashboard() {
     const userData = JSON.parse(localStorage.getItem("user") || "{}");
     const storedUserId = userData._id;
 
-    fetch("https://election-4j7k.onrender.com/api/auth/count", {
+    fetch("http://localhost:5000/api/auth/count", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -234,6 +258,46 @@ export default function AdminDashboard() {
             ),
             change: -3,
           },
+          {
+            title: "Election processing",
+            value: countPosition,
+            icon: (
+              <svg
+                className="w-8 h-8"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            ),
+            change: 8,
+          },
+          {
+            title: "Completed election",
+            value: completedCount,
+            icon: (
+              <svg
+                className="w-8 h-8"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            ),
+            change: 8,
+          },
         ];
 
         await new Promise((resolve) => setTimeout(resolve, 800));
@@ -248,7 +312,16 @@ export default function AdminDashboard() {
     };
 
     fetchDashboardData();
-  }, [totalUsers, voterCount, userRemaining]);
+  }, [totalUsers, voterCount, userRemaining, countPosition, completedCount]);
+
+  const groupedNominations = nominations.reduce((acc, n) => {
+    const pos = n.position || "Unknown Position";
+    if (!acc[pos]) {
+      acc[pos] = [];
+    }
+    acc[pos].push(n);
+    return acc;
+  }, {});
 
   return (
     <div className="space-y-6">
@@ -301,6 +374,20 @@ export default function AdminDashboard() {
                         >
                           {stat.value}
                         </Link>
+                      ) : stat.title === "Election processing" ? (
+                        <Link
+                          to="/admin/processele"
+                          className="text-blue-600 hover:underline"
+                        >
+                          {stat.value}
+                        </Link>
+                      ) : stat.title === "Completed election" ? (
+                        <Link
+                          to="/admin/completedele"
+                          className="text-blue-600 hover:underline"
+                        >
+                          {stat.value}
+                        </Link>
                       ) : (
                         stat.value
                       )}
@@ -325,84 +412,75 @@ export default function AdminDashboard() {
           </div>
 
           {/* Candidates & Votes Table */}
-          <div className="mt-8 p-6 bg-gray-50 rounded-lg shadow-md">
-            <h3 className="text-2xl font-semibold mb-6 text-center text-gray-800 border-b pb-3 border-gray-300">
-              Candidates & Votes
-            </h3>
-            {nominations.length === 0 ? (
-              <p className="text-center text-gray-500 italic mt-4">
-                No nominations available.
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full bg-white rounded-lg shadow-lg border border-gray-300 table-auto">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="px-4 py-3 border-b border-gray-300 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
-                        Candidate Name
-                      </th>
-                      <th className="px-4 py-3 border-b border-gray-300 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
-                        Candidate Bio
-                      </th>
-                      <th className="px-4 py-3 border-b border-gray-300 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
-                        Position
-                      </th>
-                      <th className="px-4 py-3 border-b border-gray-300 text-center text-sm font-medium text-gray-700 uppercase tracking-wider">
-                        Votes Count
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {nominations.map((n) => {
-                      const uniqueVotesCount = (votes) => {
-                        const seenIps = new Set();
-                        const seenSignatures = new Set();
-                        let count = 0;
+          <div>
+            {Object.keys(groupedNominations).map((position) => (
+              <div
+                key={position}
+                className="mt-8 p-6 bg-gray-50 rounded-lg shadow-md"
+              >
+                <h3 className="text-2xl font-semibold mb-6 text-center text-gray-800 border-b pb-3 border-gray-300">
+                  {position} Candidates
+                </h3>
 
-                        votes.forEach(({ ip, signature }) => {
-                          if (selectedCandidate === 0) return;
+                <div className="overflow-x-auto">
+                  <table className="min-w-full bg-white rounded-lg shadow-lg border border-gray-300 table-auto">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-4 py-3 border-b border-gray-300 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
+                          Candidate Name
+                        </th>
+                        <th className="px-4 py-3 border-b border-gray-300 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
+                          Candidate Resolution
+                        </th>
+                        <th className="px-4 py-3 border-b border-gray-300 text-center text-sm font-medium text-gray-700 uppercase tracking-wider">
+                          Votes Count
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {groupedNominations[position].map((n) => {
+                        const uniqueVotesCount = (votes) => {
+                          const seenIps = new Set();
+                          const seenSignatures = new Set();
+                          let count = 0;
+                          votes.forEach(({ ip, signature }) => {
+                            if (
+                              !seenIps.has(ip) &&
+                              !seenSignatures.has(signature)
+                            ) {
+                              count++;
+                              seenIps.add(ip);
+                              seenSignatures.add(signature);
+                            }
+                          });
+                          return count;
+                        };
 
-                          if (
-                            !seenIps.has(ip) &&
-                            !seenSignatures.has(signature)
-                          ) {
-                            // Agar IP ya signature dono abhi tak nahi aaye, tabhi count badhao
-                            count++;
-                            seenIps.add(ip);
-                            seenSignatures.add(signature);
-                          }
-                          // Agar IP ya signature pahle se mila to skip karo (duplicate)
-                        });
-
-                        return count;
-                      };
-                      return (
-                        <tr
-                          key={n._id}
-                          className="hover:bg-gray-50 transition duration-200"
-                        >
-                          <td className="px-4 py-3 border-b border-gray-200 text-gray-800 font-medium">
-                            {n.user?.name || "N/A"}
-                          </td>
-                          <td className="px-4 py-3 border-b border-gray-200 text-gray-600">
-                            {n.description || "N/A"}
-                          </td>
-                          <td className="px-4 py-3 border-b border-gray-200 text-gray-800">
-                            {n.position || "N/A"}
-                          </td>
-                          <td className="px-4 py-3 border-b border-gray-200 text-center font-semibold text-lg text-blue-600 cursor-pointer">
-                            <Link to={`/admin/candidate-votes/${n._id}`}>
-                              {uniqueVotesCount(n.votes)} Vote
-                              {uniqueVotesCount(n.votes) !== 1 ? "s" : ""}
-                            </Link>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                        return (
+                          <tr
+                            key={n._id}
+                            className="hover:bg-gray-50 transition duration-200"
+                          >
+                            <td className="px-4 py-3 border-b border-gray-200 text-gray-800 font-medium">
+                              {n.user?.name || "N/A"}
+                            </td>
+                            <td className="px-4 py-3 border-b border-gray-200 text-gray-600">
+                              {n.description || "N/A"}
+                            </td>
+                            <td className="px-4 py-3 border-b border-gray-200 text-center font-semibold text-lg text-blue-600 cursor-pointer">
+                              <Link to={`/admin/candidate-votes/${n._id}`}>
+                                {uniqueVotesCount(n.votes)} Vote
+                                {uniqueVotesCount(n.votes) !== 1 ? "s" : ""}
+                              </Link>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            )}
+            ))}
           </div>
         </>
       )}

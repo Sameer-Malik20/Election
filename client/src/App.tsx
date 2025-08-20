@@ -26,6 +26,10 @@ import AdminDetails from "./components/AdminDetails";
 import Userdetailsbysuper from "./components/userdetailsbysuper";
 import CandidateVotesbySuper from "./components/candidatevotebysuper";
 import CreateAdmin from "./components/registerbysuper";
+import ProcessingEle from "./components/processingEle";
+import CompletedEle from "./components/electionCompleted";
+import CompletedElebySuper from "./components/completedElebysuper";
+import ProcessingElebySuper from "./components/electionprobysuper";
 
 function ConditionalNavbar() {
   const location = useLocation();
@@ -68,6 +72,14 @@ function App() {
             element={<CandidateVotesbySuper />}
           />
           <Route path="createadmin" element={<CreateAdmin />} />
+          <Route
+            path="processele/:adminId"
+            element={<ProcessingElebySuper />}
+          />
+          <Route
+            path="completedele/:adminId"
+            element={<CompletedElebySuper />}
+          />
         </Route>
 
         <Route
@@ -83,6 +95,8 @@ function App() {
           <Route path="notify" element={<PublishAnnouncement />} />
           <Route path="users" element={<AllNominations />} />
           <Route path="usersdetails" element={<UserInfoSections />} />
+          <Route path="processele" element={<ProcessingEle />} />
+          <Route path="completedele" element={<CompletedEle />} />
           <Route
             path="candidate-votes/:candidateId"
             element={<CandidateVotes />}

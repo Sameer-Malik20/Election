@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 interface Announcement {
   _id: string;
   description: string;
+  eligibility: string;
   createdAt: string;
 }
 
@@ -24,12 +25,40 @@ export default function PublishAnnouncement() {
     "Operations Manager",
     "Finance Manager",
   ];
+  // eligibility rules
+  const eligibilityRules: Record<string, string> = {
+    CEO: "Minimum 15 years of experience, MBA or equivalent, leadership skills required",
+    CTO: "Minimum 12 years of experience, B.Tech/M.Tech in CS or related field, strong technical leadership",
+    CFO: "Minimum 12 years of experience, MBA (Finance) or CA, expertise in financial planning",
+    COO: "Minimum 10 years of experience, MBA or equivalent, strong operations management",
+    Manager:
+      "Minimum 5 years of experience, Bachelor's degree, team management skills",
+    "Team Lead":
+      "Minimum 4 years of experience, Bachelor's in CS/IT, leadership and project management",
+    "Senior Developer":
+      "Minimum 5 years of experience, Bachelor's in CS/IT, system design and mentorship",
+    Developer:
+      "Minimum 1 year of experience, Bachelor's in CS/IT, strong programming skills",
+    "HR Manager":
+      "Minimum 6 years of experience, MBA (HR), recruitment and employee relations",
+    "Marketing Head":
+      "Minimum 8 years of experience, MBA (Marketing), expertise in brand management",
+    "Sales Manager":
+      "Minimum 6 years of experience, MBA (Sales/Marketing), negotiation and sales strategy",
+    "Product Manager":
+      "Minimum 5 years of experience, Bachelor's in Business/Tech, agile & product strategy",
+    "Operations Manager":
+      "Minimum 6 years of experience, Bachelor's/MBA, logistics & resource management",
+    "Finance Manager":
+      "Minimum 6 years of experience, MBA (Finance) or CA, budgeting and compliance",
+  };
 
   const [title, setTitle] = useState<string>("");
   const [messageText, setMessageText] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [responseMsg, setResponseMsg] = useState<string>("");
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [eligibility, setEligibility] = useState<string>("");
   const navigate = useNavigate();
 
   const token = localStorage.getItem("accessToken");
@@ -46,7 +75,7 @@ export default function PublishAnnouncement() {
       const currentUserId = String(userData._id);
 
       const res = await fetch(
-        "https://election-4j7k.onrender.com/api/nomination/getall?type=announcements",
+        "http://localhost:5000/api/nomination/getall?type=announcements",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -59,13 +88,14 @@ export default function PublishAnnouncement() {
       }
 
       const data = await res.json();
-      console.log("All Announcements:", data);
+      console.log(data);
 
       if (res.ok) {
         // Filter announcements created by current admin
         const filteredAnnouncements = data.filter(
           (announcement: any) =>
-            String(announcement.user?._id) === currentUserId
+            String(announcement.user?._id) === currentUserId &&
+            announcement.isElectionCompleted == false
         );
 
         setAnnouncements(filteredAnnouncements);
@@ -86,17 +116,14 @@ export default function PublishAnnouncement() {
     setLoading(true);
     setResponseMsg("");
     try {
-      const res = await fetch(
-        "https://election-4j7k.onrender.com/api/nomination/publish",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ title, message: messageText }),
-        }
-      );
+      const res = await fetch("http://localhost:5000/api/nomination/publish", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, message: messageText, eligibility }),
+      });
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
@@ -108,6 +135,7 @@ export default function PublishAnnouncement() {
         setResponseMsg(`${data.message || "Announcement published!"}`);
         setTitle("");
         setMessageText("");
+        setEligibility("");
         fetchAnnouncements(); // refresh list
       } else setResponseMsg(` ${data.message}`);
     } catch (err) {
@@ -123,13 +151,10 @@ export default function PublishAnnouncement() {
       return;
 
     try {
-      const res = await fetch(
-        `https://election-4j7k.onrender.com/api/nomination/${id}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await fetch(`http://localhost:5000/api/nomination/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
@@ -153,9 +178,14 @@ export default function PublishAnnouncement() {
       </h2>
 
       {/* Dropdown */}
+      {/* Dropdown */}
       <select
         value={title}
-        onChange={(e) => setTitle(e.target.value)}
+        onChange={(e) => {
+          const pos = e.target.value;
+          setTitle(pos);
+          setEligibility(eligibilityRules[pos] || ""); // auto set eligibility
+        }}
         className="border p-2 rounded w-full mb-3"
       >
         <option value="">-- Select Position --</option>
@@ -165,6 +195,11 @@ export default function PublishAnnouncement() {
           </option>
         ))}
       </select>
+      {eligibility && (
+        <div>
+          <strong>Eligibility: {eligibility}</strong>
+        </div>
+      )}
 
       {/* Message */}
       <textarea

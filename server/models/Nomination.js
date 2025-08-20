@@ -53,6 +53,7 @@ const nominationSchema = new mongoose.Schema(
     announcement: {
       title: { type: String, set: encrypt, get: decrypt },
       message: { type: String, set: encrypt, get: decrypt },
+      eligibility: { type: String, set: encrypt, get: decrypt },
     },
     // Additional fields if needed
     nominationDate: {
@@ -67,7 +68,17 @@ const nominationSchema = new mongoose.Schema(
         votedAt: { type: Date, default: Date.now },
       },
     ],
+
+    isElectionCompleted: {
+      type: Boolean,
+      default: false,
+    },
+    completedCount: {
+      type: Number,
+      default: 0,
+    },
   },
+
   {
     timestamps: true,
     toJSON: {
@@ -95,5 +106,6 @@ nominationSchema.pre("save", function (next) {
 nominationSchema.index({ user: 1 }); // For finding user's nominations
 nominationSchema.index({ isVerified: 1 }); // For admin verification queries
 nominationSchema.index({ position: 1 }); // For position-based queries
+nominationSchema.index({ isElectionCompleted: 1 });
 
 export default mongoose.model("Nomination", nominationSchema);

@@ -6,6 +6,7 @@ interface Announcement {
   announcement?: {
     title: string;
     message: string;
+    eligibility: string;
   };
   createdAt: string;
 }
@@ -17,6 +18,7 @@ interface Nomination {
   isVerified: boolean;
   isRejected: boolean;
   rejectReason?: string;
+  isElectionCompleted?: boolean;
 }
 
 const PositionsList: React.FC = () => {
@@ -29,7 +31,7 @@ const PositionsList: React.FC = () => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [selectedAnnouncement, setSelectedAnnouncement] =
     useState<Announcement | null>(null);
-  const [bio, setBio] = useState<string>("");
+  const [resulation, setresulation] = useState<string>("");
   const [appliedAnnouncements, setAppliedAnnouncements] = useState<string[]>(
     []
   );
@@ -52,15 +54,12 @@ const PositionsList: React.FC = () => {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(
-        "https://election-4j7k.onrender.com/api/auth/published",
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch("http://localhost:5000/api/auth/published", {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
@@ -68,9 +67,14 @@ const PositionsList: React.FC = () => {
       }
 
       const data = await res.json();
+      console.log(data);
 
       if (res.ok) {
-        setAnnouncements(data);
+        const filtered = data.filter(
+          (item: any) => item.isElectionCompleted === false
+        );
+
+        setAnnouncements(filtered);
       } else {
         setError(data.message || "Failed to fetch announcements");
       }
@@ -85,28 +89,30 @@ const PositionsList: React.FC = () => {
   const fetchMyNomination = async () => {
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(
-        "https://election-4j7k.onrender.com/api/auth/myNom",
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch("http://localhost:5000/api/auth/myNom", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
         return;
       }
       const data = await res.json();
+      console.log("mynom", data);
 
       if (res.ok && Array.isArray(data) && data.length > 0) {
-        const sortedNominations = data.sort(
-          (a: Nomination, b: Nomination) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
+        const sortedNominations = data
+          .filter((n: Nomination) => n.isElectionCompleted === false)
+          .sort(
+            (a: Nomination, b: Nomination) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        console.log(sortedNominations);
+
         setMyNomination(sortedNominations);
       } else {
         setMyNomination([]);
@@ -119,7 +125,7 @@ const PositionsList: React.FC = () => {
   const handleApplyClick = (announcement: Announcement) => {
     if (appliedAnnouncements.includes(announcement._id)) return;
     setSelectedAnnouncement(announcement);
-    setBio("");
+    setresulation("");
     setShowModal(true);
   };
 
@@ -130,27 +136,24 @@ const PositionsList: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!selectedAnnouncement) return;
-    if (bio.trim() === "") {
-      alert("Please write your bio before submitting.");
+    if (resulation.trim() === "") {
+      alert("Please write your resulation before submitting.");
       return;
     }
 
     const token = localStorage.getItem("accessToken");
     try {
-      const res = await fetch(
-        "https://election-4j7k.onrender.com/api/nomination/create",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            position: selectedAnnouncement?.announcement?.title,
-            description: bio,
-          }),
-        }
-      );
+      const res = await fetch("http://localhost:5000/api/nomination/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          position: selectedAnnouncement?.announcement?.title,
+          description: resulation,
+        }),
+      });
       if (res.status === 401) {
         alert("Token expired");
         navigate("/login");
@@ -253,6 +256,9 @@ const PositionsList: React.FC = () => {
                 Message
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Eligibility
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Date
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -269,6 +275,9 @@ const PositionsList: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                     {a.announcement?.message || "No Message"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    {a.announcement?.eligibility || "No Message"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {new Date(a.createdAt).toLocaleString()}
@@ -301,7 +310,7 @@ const PositionsList: React.FC = () => {
         </table>
       </div>
 
-      {/* Modal for application with bio */}
+      {/* Modal for application with resulation */}
       {showModal && selectedAnnouncement && (
         <div className="fixed inset-0 backdrop-blur flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-lg relative">
@@ -310,16 +319,17 @@ const PositionsList: React.FC = () => {
             </h3>
 
             <p className="text-gray-600 mb-4 text-sm">
-              📝 Please write a short bio explaining why you are suitable for
-              this position. This will help the admin review your application.
+              📝 Please write a short resulation explaining why you are suitable
+              for this position. This will help the admin review your
+              application.
             </p>
 
-            <label className="block mb-2 font-medium">Your Bio:</label>
+            <label className="block mb-2 font-medium">Your resulation:</label>
             <textarea
               className="w-full border border-gray-300 rounded p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
               rows={4}
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
+              value={resulation}
+              onChange={(e) => setresulation(e.target.value)}
               placeholder="Write about your experience, skills, and why you want this position..."
             />
 

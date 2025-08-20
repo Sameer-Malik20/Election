@@ -8,6 +8,7 @@ interface Nomination {
   description: string;
   position: string;
   isVerified: boolean;
+  isElectionCompleted: boolean;
 }
 
 export default function EmployeeDashboard() {
@@ -42,7 +43,7 @@ export default function EmployeeDashboard() {
       try {
         const token = localStorage.getItem("accessToken");
         const res = await fetch(
-          "https://election-4j7k.onrender.com/api/nomination/getall?type=nominations",
+          "http://localhost:5000/api/nomination/getall?type=nominations",
           {
             method: "GET",
             headers: {
@@ -55,7 +56,8 @@ export default function EmployeeDashboard() {
 
         if (res.ok) {
           const verifiedNominations = data.filter(
-            (n: Nomination) => n.isVerified
+            (n: Nomination) =>
+              n.isVerified && n.isElectionCompleted === false && n.user !== null
           );
           setNominations(verifiedNominations);
         } else {
@@ -131,7 +133,7 @@ export default function EmployeeDashboard() {
                       {nom.user?.name || "Unknown Candidate"}
                     </p>
                     <p className="text-gray-600 italic">
-                      Bio: {nom.description}
+                      resulation: {nom.description}
                     </p>
                     <p className="text-sm text-gray-400 italic">
                       Position: {nom.position}

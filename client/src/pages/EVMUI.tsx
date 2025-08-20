@@ -4,6 +4,15 @@ import { useState, useEffect } from "react";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+
+interface Winner {
+  candidate: {
+    name: string;
+    position: string;
+  };
+  votes?: number;
+}
+
 const AdvancedCorporateEVM = () => {
   const [selectedCandidate, setSelectedCandidate] = useState<number | null>(
     null
@@ -48,41 +57,65 @@ const AdvancedCorporateEVM = () => {
     const token = localStorage.getItem("accessToken");
     if (!token) return;
 
-    fetch("https://election-4j7k.onrender.com/api/auth/result", {
+    fetch("http://localhost:5000/api/auth/result", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
+        Object.values(data.winners || {}).some((winnerNom) =>
+          (Array.isArray((winnerNom as { votes?: any[] }).votes)
+            ? (winnerNom as { votes?: any[] }).votes
+            : []
+          ).some((vote) => {
+            const voteUserId = vote.user?._id || "";
+            const voteSignature = vote.signature || "";
+            const voteIp = vote.ip || "";
 
-        let hasVoted = false;
-
-        Object.values(data.winners || {}).some((winner) =>
-          ((winner as { votes?: any[] }).votes || []).some((vote) => {
             if (
-              vote.user?._id === userId ||
-              vote.signature === signature ||
-              vote.ip === ip
+              voteUserId === userId ||
+              voteSignature === signature ||
+              voteIp === ip
             ) {
-              hasVoted = true;
               return true;
             }
             return false;
           })
         );
+        const winnersObj = data.winners || {};
 
-        if (hasVoted) setAlreadyVoted(true);
-      });
+        const winnersArray = Object.entries(
+          winnersObj as Record<string, Winner>
+        )
+          .filter(
+            ([key, winner]) =>
+              key && key !== "undefined" && winner && winner.candidate
+          )
+          .map(([, winner]) => winner);
+
+        const userHasVoted = winnersArray.every(
+          (winner) => (winner.votes || 0) > 0
+        );
+        if (
+          (data.status === "thanks" || data.status === "results") &&
+          userHasVoted
+        ) {
+          setAlreadyVoted(true);
+        } else {
+          setAlreadyVoted(false);
+        }
+      })
+      .catch((err) => console.error("Error fetching result:", err));
   }, [userId, signature, ip]);
 
+  // // handle redirect / alert
   useEffect(() => {
     if (alreadyVoted) {
-      alert("You are already voted");
+      alert("You have already voted");
       navigate("/employee/result");
     } else if (showCompletion) {
       navigate("/employee/result");
     }
-  }, [showCompletion, alreadyVoted, navigate]);
+  }, [alreadyVoted, showCompletion, navigate]);
 
   //fetch positions
   const fetchAnnouncements = async () => {
@@ -91,21 +124,22 @@ const AdvancedCorporateEVM = () => {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(
-        "https://election-4j7k.onrender.com/api/auth/published",
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch("http://localhost:5000/api/auth/published", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await res.json();
+      console.log(data);
 
       if (res.ok) {
-        setAnnouncements(data);
+        const verifiedNominations = data.filter(
+          (n) => n.isVerified === true && n.isElectionCompleted === false
+        );
+        setAnnouncements(verifiedNominations);
       } else {
         setError(data.message || "Failed to fetch announcements");
       }
@@ -125,7 +159,7 @@ const AdvancedCorporateEVM = () => {
     try {
       const token = localStorage.getItem("accessToken");
       const res = await fetch(
-        "https://election-4j7k.onrender.com/api/nomination/getall?type=nominations",
+        "http://localhost:5000/api/nomination/getall?type=nominations",
         {
           method: "GET",
           headers: {
@@ -136,14 +170,15 @@ const AdvancedCorporateEVM = () => {
       );
 
       const data = await res.json();
+      console.log(data);
 
       if (res.ok) {
         // ✅ Filter verified nominations
-        const verifiedNominations = data.filter((n) => n.isVerified === true);
+        const verifiedNominations = data.filter(
+          (n) => n.isVerified === true && n.isElectionCompleted === false
+        );
 
-        // ✅ Optional: extract only names
-        //const verifiedUserNames = verifiedNominations.map((n) => n.user?.name);
-
+        setAnnouncements(verifiedNominations);
         setNominations(verifiedNominations);
         setMessage("Verified nominations loaded successfully!");
       } else {
@@ -345,7 +380,7 @@ const AdvancedCorporateEVM = () => {
 
       const token = localStorage.getItem("accessToken");
 
-      await fetch("https://election-4j7k.onrender.com/api/nomination/vote", {
+      await fetch("http://localhost:5000/api/nomination/vote", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -402,9 +437,7 @@ const AdvancedCorporateEVM = () => {
   useEffect(() => {
     if (Array.isArray(announcements) && announcements.length > 0) {
       const firstPosition = [
-        ...new Set(
-          announcements.map((item) => item.announcement?.title).filter(Boolean)
-        ),
+        ...new Set(announcements.map((item) => item.position).filter(Boolean)),
       ][0];
       if (firstPosition && activePosition !== firstPosition) {
         setActivePosition(firstPosition);
@@ -415,7 +448,7 @@ const AdvancedCorporateEVM = () => {
 
   // Total users count effect
   useEffect(() => {
-    fetch("https://election-4j7k.onrender.com/api/auth/count", {
+    fetch("http://localhost:5000/api/auth/count", {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
       },
@@ -731,7 +764,7 @@ const AdvancedCorporateEVM = () => {
                                       {n.user?.name}
                                     </span>
                                     <div className="text-xs text-gray-500">
-                                      {n.description}
+                                      Resulation: {n.description}
                                     </div>
                                     <div className="text-xs text-gray-500">
                                       {n.party}
@@ -834,9 +867,7 @@ const AdvancedCorporateEVM = () => {
                 {Array.isArray(announcements) && announcements.length > 0 ? (
                   [
                     ...new Set(
-                      announcements
-                        .map((item) => item.announcement?.title)
-                        .filter(Boolean)
+                      announcements.map((item) => item.position).filter(Boolean)
                     ),
                   ].map((position) => (
                     <button

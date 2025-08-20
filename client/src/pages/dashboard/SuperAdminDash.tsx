@@ -27,7 +27,7 @@ const SuperAdminDashboard: React.FC = () => {
     const token = localStorage.getItem("accessToken");
     if (!token) return;
 
-    fetch("https://election-4j7k.onrender.com/api/auth/count", {
+    fetch("http://localhost:5000/api/auth/count", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -52,7 +52,7 @@ const SuperAdminDashboard: React.FC = () => {
     const token = localStorage.getItem("accessToken");
     if (!token) return;
 
-    fetch("https://election-4j7k.onrender.com/api/auth/count", {
+    fetch("http://localhost:5000/api/auth/count", {
       headers: {
         Authorization: `Bearer ${token}`,
       },

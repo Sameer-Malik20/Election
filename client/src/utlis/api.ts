@@ -1,7 +1,7 @@
 // src/utils/api.ts
 import { handleUnauthorized, getAccessToken } from "./auth";
 
-const BASE_URL = "https://election-4j7k.onrender.com"; // Your backend URL
+const BASE_URL = "http://localhost:5000"; // Your backend URL
 
 interface ApiOptions extends RequestInit {
   headers?: HeadersInit;

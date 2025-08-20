@@ -13,6 +13,7 @@ import { requestOtp } from "../utils/otp.js";
 import uploadData from "../controllers/adminData.js";
 import { getPublishedPositions } from "../controllers/electionNotify.js";
 import {
+  fetchResults,
   getMyNomination,
   getResults,
   UserNominations,
@@ -33,6 +34,7 @@ router.get("/published", authenticate(), getPublishedPositions);
 router.get("/myNom", authenticate(), getMyNomination);
 router.get("/count", authenticate(), getUserCount);
 router.get("/result", authenticate(), getResults);
+router.get("/complete", authenticate(), fetchResults);
 router.get("/:id", authenticate(), UserNominations);
 
 export default router;

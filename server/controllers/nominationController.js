@@ -118,7 +118,7 @@ export const getMyNomination = async (req, res) => {
     const userId = req.user?.id || req.user?._id || req.body.user;
 
     const nomination = await Nomination.find({ user: userId }).select(
-      "position isVerified isRejected rejectReason createdAt"
+      "position isVerified isRejected rejectReason createdAt isElectionCompleted"
     );
 
     if (!nomination) {
@@ -248,12 +248,11 @@ export const voteNomination = async (req, res) => {
 export const getResults = async (req, res) => {
   try {
     const userId = req.user?.id || req.user?._id || req.body.user;
-
     if (!userId) {
       return res.status(400).json({ message: "User ID is required" });
     }
 
-    // Find nomination by user ID only
+    // 1. Check if user has voted
     const nomination = await Nomination.findOne({
       "votes.user": userId,
     }).lean();
@@ -262,52 +261,91 @@ export const getResults = async (req, res) => {
       return res.status(404).json({ message: "Vote not found" });
     }
 
-    // Find the user's vote
     const vote = nomination.votes.find(
       (v) => v?.user?.toString() === userId?.toString()
     );
-
     if (!vote) {
       return res.status(404).json({ message: "Vote not found" });
     }
 
-    const diffMs = Date.now() - new Date(vote.votedAt).getTime();
-    const remainingMs = Math.max(0, 10 * 60 * 1000 - diffMs);
-
+    const VOTING_DURATION = 24 * 60 * 60 * 1000; // 15 minutes
+    const voteTime = new Date(vote.votedAt).getTime();
+    const diffMs = Date.now() - voteTime;
+    const remainingMs = Math.max(0, VOTING_DURATION - diffMs);
     if (remainingMs > 0) {
       return res.status(200).json({
-        status: "thanks",
-        message: "Thank you for voting",
+        status: remainingMs > 0 ? "thanks" : "results",
+        message: remainingMs > 0 ? "Thank you for voting" : "Voting completed",
         remainingMs,
+        totalDuration: VOTING_DURATION,
       });
     }
-
-    // Send results after 10 minutes or if no vote found
+    // 3. Get all verified nominations
     const nominations = await Nomination.find({ isVerified: true })
       .populate("user", "name email")
       .populate("votes.user", "name email")
       .lean();
 
+    if (!nominations.length) {
+      return res.status(404).json({ message: "No nominations found" });
+    }
+
+    // 4. Calculate winners per position
     const winners = {};
     const positions = [...new Set(nominations.map((n) => n.position))];
 
     positions.forEach((position) => {
       const candidates = nominations.filter((n) => n.position === position);
-      if (candidates.length === 0) return;
+      if (!candidates.length) return;
 
       const sorted = candidates.sort(
         (a, b) => (b.votes?.length || 0) - (a.votes?.length || 0)
       );
 
-      winners[position] = sorted[0];
+      winners[position] = {
+        position,
+        candidate: sorted[0].user,
+        votes: sorted[0].votes?.length || 0,
+      };
     });
 
+    // 5. Update nominations whose voting duration is over
+    const now = new Date();
+
+    const nominationsToComplete = nominations.filter(
+      (n) =>
+        !n.isElectionCompleted &&
+        now.getTime() -
+          (n.votes?.length
+            ? new Date(n.votes[n.votes.length - 1].votedAt).getTime()
+            : new Date(n.createdAt).getTime()) >=
+          VOTING_DURATION
+    );
+
+    for (const n of nominationsToComplete) {
+      await Nomination.updateOne(
+        { _id: n._id },
+        {
+          $set: {
+            isElectionCompleted: true,
+            winners: Object.values(winners),
+            completedAt: new Date(),
+          },
+          $inc: { completedCount: 1 },
+        }
+      );
+    }
+
+    // 6. Response
     return res.status(200).json({
       status: "results",
       winners,
+      completedAt: new Date(),
+      remainingMs: 0,
+      totalDuration: VOTING_DURATION,
     });
   } catch (error) {
-    console.error("Result error:", error);
+    console.error("❌ Result error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -317,4 +355,51 @@ export const UserNominations = async (req, res) => {
   const nomination = await Nomination.findById(id).populate("user", "name");
   if (!nomination) return res.status(404).json({ message: "Not found" });
   res.json({ nomination });
+};
+
+// ✅ Only Results API
+export const fetchResults = async (req, res) => {
+  try {
+    const nominations = await Nomination.find({ isVerified: true })
+      .populate("user", "name email")
+      .populate("votes.user", "name email")
+      .lean();
+
+    if (!nominations.length) {
+      return res.status(404).json({ message: "No nominations found" });
+    }
+
+    // Winners calculate
+    const winners = {};
+    const positions = [...new Set(nominations.map((n) => n.position))];
+
+    positions.forEach((position) => {
+      const candidates = nominations.filter((n) => n.position === position);
+      if (!candidates.length) return;
+
+      const sorted = candidates.sort(
+        (a, b) => (b.votes?.length || 0) - (a.votes?.length || 0)
+      );
+
+      winners[position] = {
+        position,
+        candidate: sorted[0].user,
+        votes: sorted[0].votes?.length || 0,
+      };
+    });
+
+    return res.status(200).json({
+      status: "results",
+      winners,
+      allNominations: nominations.map((n) => ({
+        candidate: n.user,
+        position: n.position,
+        votes: n.votes?.length || 0,
+        nominationDate: n.nominationDate,
+      })),
+    });
+  } catch (error) {
+    console.error("❌ Fetch Results error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
 };

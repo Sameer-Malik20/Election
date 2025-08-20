@@ -2,7 +2,7 @@ import Nomination from "../models/Nomination.js";
 
 export const publishPosition = async (req, res) => {
   try {
-    const { title, message } = req.body; // title will be selected from dropdown
+    const { title, message, eligibility, isElectionCompleted } = req.body; // isCompleted optional
     const userId = req.userId;
 
     if (!title || !message) {
@@ -32,30 +32,31 @@ export const publishPosition = async (req, res) => {
       return res.status(400).json({ message: "Invalid position title" });
     }
 
-    //  Save only as an announcement (not as a user nomination)
     const announcementDoc = await Nomination.create({
       user: userId,
       isVerified: true, // Admin verified by default
-      announcement: { title, message }, // use announcement field
+      announcement: { title, message, eligibility },
       description: `${title}`,
+      isCompleted: isElectionCompleted || false, // default false
     });
 
     res.status(201).json({
       message: "Position announcement published successfully",
       announcement: announcementDoc.announcement,
+      isCompleted: announcementDoc.isElectionCompleted, // ye bhi return kar do
     });
   } catch (err) {
-    console.error(" Error saving announcement:", err);
+    console.error("Error saving announcement:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
 export const getPublishedPositions = async (req, res) => {
   try {
-    //  Only get docs where announcement field exists
+    // Only get docs where announcement field exists
     const announcements = await Nomination.find(
       { announcement: { $exists: true, $ne: {} } },
-      { announcement: 1, _id: 1, createdAt: 1 } // return only announcement fields
+      { announcement: 1, _id: 1, createdAt: 1, isElectionCompleted: 1 } // include isCompleted
     ).sort({ createdAt: -1 });
 
     res.status(200).json(announcements);
